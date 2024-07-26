@@ -7,6 +7,8 @@ import { sendError, sendSuccess } from '../../utils/messages';
 import sendEmbed from '../../utils/messages/sendEmbed';
 import db from '../../utils/database';
 
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 export default new Command({
     name: 'scanusers',
     description: 'Initiates a guild scan',
@@ -55,6 +57,7 @@ export default new Command({
                     user
                 );
                 if (result) actioned += 1;
+                await delay(500);
             }
 
             logger.info({
