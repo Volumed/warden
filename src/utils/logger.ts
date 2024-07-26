@@ -24,21 +24,21 @@ const transport_logs: any = [
     }),
 ];
 
-if (process.env.LOKI_URL) {
-    transport_logs.push(
-        new LokiTransport({
-            host: process.env.LOKI_URL ?? '',
-            basicAuth: process.env.LOKI_AUTH ?? '',
-            labels: { app: `warden-${process.env.enviroment}` },
-            batching: true,
-            interval: 10,
-            json: true,
-            replaceTimestamp: true,
-            format: format.json(),
-            onConnectionError: (err: any) => console.error(err),
-        })
-    );
-}
+// if (process.env.LOKI_URL) {
+//     transport_logs.push(
+//         new LokiTransport({
+//             host: process.env.LOKI_URL ?? '',
+//             basicAuth: process.env.LOKI_AUTH ?? '',
+//             labels: { app: `warden-${process.env.enviroment}` },
+//             batching: true,
+//             interval: 10,
+//             json: true,
+//             replaceTimestamp: true,
+//             format: format.json(),
+//             onConnectionError: (err: any) => console.error(err),
+//         })
+//     );
+// }
 
 const logger = createLogger({
     level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
