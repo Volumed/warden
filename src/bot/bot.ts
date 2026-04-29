@@ -35,6 +35,7 @@ const rawBot = createBot({
       name: true,
       roles: true,
       ownerId: true,
+      members: true,
     },
     role: {
       id: true,
@@ -70,13 +71,22 @@ const rawBot = createBot({
 
 const _proxyCacheBot = createProxyCache(rawBot, {
   desiredProps: {
-    guild: ['id', 'name', 'ownerId', 'roles'],
-    roles: ['id', 'guildId', 'permissions'],
+    interaction: ['id', 'type', 'data', 'token', 'guildId', 'member', 'user'],
+    guild: ['id', 'name', 'ownerId', 'roles', 'members'],
+    role: ['id', 'guildId', 'permissions'],
+    member: ['id', 'roles'],
+    channel: ['id'],
+    message: ['id', 'channelId'],
+    user: ['id', 'username', 'discriminator', 'toggles'],
   },
   cacheInMemory: {
+    interaction: true,
     guild: true,
     role: true,
-    default: false,
+    member: true,
+    channel: true,
+    message: true,
+    user: true,
   },
 })
 
