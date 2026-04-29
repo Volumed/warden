@@ -12,28 +12,31 @@
 
 ### Public Commands
 
-`/about` - Public
-`/badservers` - Public
-`/checkserver` - Public
-`/checkuser` - Public
-`/invite` - Public
-`/ping` - Public
-`/checkself` - Public
-`/status` - Public
+`/about`
+`/badservers`
+`/checkserver`
+`/checkuser`
+`/invite`
+`/ping`
+`/checkself`
+`/status`
 
 ### Staff Commands
 
-`/adduser` - Staff
-`/appeal` - Staff
-`/bsm` - Staff
-`/checkserveradmin` - Staff
-`/checkuseradmin` - Staff
-`/forcecheck` - Staff
-`/multiadduser` - Staff
-`/multicheckuseradmin` - Staff
-`/multiforcecheck` - Staff
-`/note` - Staff
-`/updateservername` - Staff
-`/upstatus` - Staff
+`/adduser`
+`/appeal`
+`/bsm`
+`/checkserveradmin`
+`/checkuseradmin`
+`/forcecheck`
+`/multiadduser`
+`/multicheckuseradmin`
+`/multiforcecheck`
+`/note`
+`/updateservername`
+`/upstatus`
 
 ### Admin Commands
+
+`/config`
+`/scanusers`
