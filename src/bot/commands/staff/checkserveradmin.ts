@@ -27,7 +27,7 @@ import { GUILD_INVITE_CACHE_PREFIX, GUILD_INVITE_CACHE_TTL } from '../public/che
 const MAX_BULK_PER_PAGE = 5
 
 export const BULK_CHECK_SERVERS_CACHE_PREFIX = 'bulkcheckservers:'
-export const BULK_CHECK_SERVERS_CACHE_TTL = 300
+export const BULK_CHECK_SERVERS_CACHE_TTL = 300 // 5 minutes
 
 export interface BulkCheckServersResult {
   found: Array<{ badServer: BadServer; guildId: string }>
