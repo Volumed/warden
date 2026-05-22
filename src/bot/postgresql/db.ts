@@ -113,6 +113,19 @@ export const getTotalBadServers = async (): Promise<number> => {
   }
 }
 
+export const addBadServer = async (badServer: Omit<BadServer, 'createdat' | 'updatedat'>) => {
+  try {
+    const now = new Date()
+    await sql`
+      INSERT INTO badservers (id, name, oldnames, type, addedby, invite, reason, createdat, updatedat)
+      VALUES (${badServer.id}, ${badServer.name}, ${badServer.oldnames ?? null}, ${badServer.type}, ${badServer.addedby}, ${badServer.invite ?? null}, ${badServer.reason}, ${now}, ${now})
+    `
+    bot.logger.info(`Bad server with ID ${badServer.id} added successfully`)
+  } catch (err) {
+    bot.logger.error(`Error adding bad server with ID ${badServer.id}:`, err)
+  }
+}
+
 // Users functions
 const toUser = (row: Record<string, unknown>): User => ({
   id: row.id as string,
