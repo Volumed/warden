@@ -13,8 +13,8 @@ import {
   serverTypeMap,
 } from '../../utils/server.js'
 
-const GUILD_ID_CACHE_PREFIX = 'invite:'
-const GUILD_ID_CACHE_TTL = 30 * 24 * 60 * 60 // 30 days
+export const GUILD_INVITE_CACHE_PREFIX = 'invite:'
+export const GUILD_INVITE_CACHE_TTL = 30 * 24 * 60 * 60 // 30 days
 
 createCommand({
   name: 'checkserver',
@@ -62,14 +62,20 @@ createCommand({
 
       const inviteCode = getInviteCode({ invite })
       try {
-        const cached = await get(`${GUILD_ID_CACHE_PREFIX}${inviteCode}`)
+        const cached = await get(`${GUILD_INVITE_CACHE_PREFIX}${inviteCode}`)
         if (cached) {
-          guildId = cached
+          const parsed = JSON.parse(cached) as { id: string; name: string }
+          guildId = parsed.id
         } else {
           const inviteInfo = await fetchInviteInfo(inviteCode)
           if (inviteInfo?.guild) {
             guildId = inviteInfo.guild.id as string
-            await set(`${GUILD_ID_CACHE_PREFIX}${inviteCode}`, guildId, GUILD_ID_CACHE_TTL)
+            const guildName = inviteInfo.guild.name as string
+            await set(
+              `${GUILD_INVITE_CACHE_PREFIX}${inviteCode}`,
+              JSON.stringify({ id: guildId, name: guildName }),
+              GUILD_INVITE_CACHE_TTL,
+            )
           }
         }
       } catch (err) {
