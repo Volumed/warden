@@ -11,7 +11,7 @@ const assertEnv = (env: string): string => {
 }
 
 const parseNumber = (envValue: string, env: string): number => {
-  const parsed = Number.parseInt(envValue)
+  const parsed = Number.parseInt(envValue, 10)
 
   if (Number.isFinite(parsed)) return parsed
 

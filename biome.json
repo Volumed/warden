@@ -1,56 +1,28 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.4.12/schema.json",
-  "vcs": {
-    "enabled": true,
-    "clientKind": "git",
-    "useIgnoreFile": true
-  },
+  "$schema": "https://biomejs.dev/schemas/2.5.9/schema.json",
   "files": {
-    "includes": [
-      "**",
-      "!!**/dist"
-    ]
+    "includes": ["**", "!!**/dist"]
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "performance": {
+        "noDelete": "off"
+      },
+      "suspicious": {
+        "noExplicitAny": "off"
+      }
+    }
   },
   "formatter": {
     "enabled": true,
     "formatWithErrors": false,
+    "includes": ["**"],
+    "attributePosition": "auto",
     "indentStyle": "space",
     "indentWidth": 2,
-    "lineEnding": "lf",
-    "lineWidth": 120
-  },
-  "linter": {
-    "enabled": true,
-    "domains": {
-      "next": "recommended"
-    },
-    "rules": {
-      "recommended": false,
-      "correctness": {
-        "noUnusedVariables": "error",
-        "noUnusedImports": "error"
-      },
-      "suspicious": {
-        "noConsole": {
-          "level": "error"
-        }
-      },
-      "style": {
-        "noNamespace": "error",
-        "noNonNullAssertion": "off",
-        "useImportType": "error",
-        "useConsistentArrayType": {
-          "level": "error",
-          "options": {
-            "syntax": "shorthand"
-          }
-        }
-      },
-      "complexity": {
-        "useArrowFunction": "error",
-        "noForEach": "error"
-      }
-    }
+    "lineWidth": 120,
+    "lineEnding": "lf"
   },
   "javascript": {
     "formatter": {
@@ -64,12 +36,9 @@
       "trailingCommas": "all"
     }
   },
-  "assist": {
-    "enabled": true,
-    "actions": {
-      "source": {
-        "organizeImports": "on"
-      }
+  "json": {
+    "formatter": {
+      "trailingCommas": "none"
     }
   }
 }

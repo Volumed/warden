@@ -7,9 +7,9 @@ export type BadServer = typeof badservers.$inferSelect
 export type User = typeof users.$inferSelect
 export type Import = typeof imports.$inferSelect
 
-const db = drizzle(process.env.DATABASE_URL!)
+const db = drizzle(process.env.DATABASE_URL || '')
 
-const checkConnection = async (health?: boolean): Promise<boolean | void> => {
+const checkConnection = async (health?: boolean): Promise<boolean | undefined> => {
   try {
     await db.execute(sql`SELECT 1`)
     if (health) return true

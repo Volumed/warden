@@ -20,7 +20,6 @@
     "lint": "biome lint --write"
   },
   "dependencies": {
-    "@biomejs/biome": "^2.4.12",
     "@discordeno/bot": "22.0.1-next.3edb0a9",
     "@fastify/multipart": "^10.0.0",
     "@influxdata/influxdb-client": "^1.35.0",
@@ -35,6 +34,7 @@
     "postgres": "^3.4.9"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.5.9",
     "@types/node": "^26.2.0",
     "@types/pg": "^8.23.1",
     "chokidar": "^5.0.0",

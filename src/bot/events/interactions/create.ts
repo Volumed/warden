@@ -51,8 +51,6 @@ bot.events.interactionCreate = async (interaction) => {
         page = page + 1
       } else if (direction === 'first') {
         page = 0
-      } else if (direction === 'last') {
-        page = page
       }
 
       try {
@@ -79,8 +77,6 @@ bot.events.interactionCreate = async (interaction) => {
         page = page + 1
       } else if (direction === 'first') {
         page = 0
-      } else if (direction === 'last') {
-        page = page
       }
 
       try {
@@ -111,8 +107,6 @@ bot.events.interactionCreate = async (interaction) => {
         page = page + 1
       } else if (direction === 'first') {
         page = 0
-      } else if (direction === 'last') {
-        page = page
       }
 
       try {
@@ -143,8 +137,6 @@ bot.events.interactionCreate = async (interaction) => {
         page = page + 1
       } else if (direction === 'first') {
         page = 0
-      } else if (direction === 'last') {
-        page = page
       }
 
       try {

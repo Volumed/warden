@@ -132,7 +132,7 @@ createCommand({
 
     const userTypeMapping = mapUserTypes(userTypes)
 
-    let extraDetials
+    let extraDetials: ExtraDetails[] | undefined
 
     if (userTypes.includes('SUPPORTER') || userTypes.includes('OWNER')) {
       try {
