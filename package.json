@@ -20,7 +20,7 @@
     "lint": "biome lint --write"
   },
   "dependencies": {
-    "@discordeno/bot": "22.0.1-next.3edb0a9",
+    "@discordeno/bot": "22.0.1-next.a9a2561",
     "@fastify/multipart": "^10.0.0",
     "@influxdata/influxdb-client": "^1.35.0",
     "bullmq": "^5.75.2",

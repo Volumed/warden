@@ -5,7 +5,7 @@
     "": {
       "name": "warden",
       "dependencies": {
-        "@discordeno/bot": "22.0.1-next.3edb0a9",
+        "@discordeno/bot": "22.0.1-next.a9a2561",
         "@fastify/multipart": "^10.0.0",
         "@influxdata/influxdb-client": "^1.35.0",
         "bullmq": "^5.75.2",
@@ -48,15 +48,15 @@
 
     "@biomejs/cli-win32-x64": ["@biomejs/cli-win32-x64@2.5.9", "", { "os": "win32", "cpu": "x64" }, "sha512-Yiq0H56LjXSSw/hd9YkXgSLQfzyDJzbzU2TezozxyNw+uKWAqOtqGVvBfzKRRDiaFF5avGAhHdWKx7LtDOShUw=="],
 
-    "@discordeno/bot": ["@discordeno/bot@22.0.1-next.3edb0a9", "", { "dependencies": { "@discordeno/gateway": "22.0.1-next.3edb0a9", "@discordeno/rest": "22.0.1-next.3edb0a9", "@discordeno/types": "22.0.1-next.3edb0a9", "@discordeno/utils": "22.0.1-next.3edb0a9" } }, "sha512-7p9d7wSpLC2KeFJFnbvqseB+/8+zYmPk3YlQ2oVbuW5uVnv61GSzashlNdjjRfWeVvP34Ty+SxmaKP9crmTQFA=="],
+    "@discordeno/bot": ["@discordeno/bot@22.0.1-next.a9a2561", "", { "dependencies": { "@discordeno/gateway": "22.0.1-next.a9a2561", "@discordeno/rest": "22.0.1-next.a9a2561", "@discordeno/types": "22.0.1-next.a9a2561", "@discordeno/utils": "22.0.1-next.a9a2561" } }, "sha512-PDWmv761GzZmdFzIfmoEPezZns3W8l7pf9NxCUUWc1COP2Br5InlMl8O8PFmKmeg30r08dMWc2gDpWSaZxcuqA=="],
 
-    "@discordeno/gateway": ["@discordeno/gateway@22.0.1-next.3edb0a9", "", { "dependencies": { "@discordeno/types": "22.0.1-next.3edb0a9", "@discordeno/utils": "22.0.1-next.3edb0a9", "ws": "^8.20.0" }, "optionalDependencies": { "fzstd": "^0.1.1" } }, "sha512-u5CQFYpFwDF1ktVuSkMAjHisau+TAqTTFG6ZeSltDSRtjL25feUrtUvLRbfVNQbh4Fvjm8RDygnE4zvRBT55UQ=="],
+    "@discordeno/gateway": ["@discordeno/gateway@22.0.1-next.a9a2561", "", { "dependencies": { "@discordeno/types": "22.0.1-next.a9a2561", "@discordeno/utils": "22.0.1-next.a9a2561" } }, "sha512-xkhn0Hz+KaDQizekDP+WLX/v+G60ZGPlSK5RryhfCJh1nw39Xz42hsfwBub64JtC/VJ0oor34020ybV9o317UQ=="],
 
-    "@discordeno/rest": ["@discordeno/rest@22.0.1-next.3edb0a9", "", { "dependencies": { "@discordeno/types": "22.0.1-next.3edb0a9", "@discordeno/utils": "22.0.1-next.3edb0a9" } }, "sha512-SOaCGCFRGB14Qln2EX3jXvJ2QIzyBPF8T9WrdsKPpFv8ZKJO6ZcyZtYetPpUCVVJiC9sfQ9XzwAta0lYRLX9PA=="],
+    "@discordeno/rest": ["@discordeno/rest@22.0.1-next.a9a2561", "", { "dependencies": { "@discordeno/types": "22.0.1-next.a9a2561", "@discordeno/utils": "22.0.1-next.a9a2561" } }, "sha512-vh51gr4QuennRwnmfDkhXQ+lqm1VXmjAKYbEBWMv9VAYObXRZe9wvbXxdR1XV2jhcB9NCJYY2Ji3NLFz9BTrUA=="],
 
-    "@discordeno/types": ["@discordeno/types@22.0.1-next.3edb0a9", "", {}, "sha512-e3p2YqBMaERIPE8ohfhggSINBZCD6+6M8wJt8ibpQC3os3dPdmTyziIZMwdej9LaUf/18UDynTtHrGSzX8gVrg=="],
+    "@discordeno/types": ["@discordeno/types@22.0.1-next.a9a2561", "", {}, "sha512-WpEjyLw3YQtdfNS//pfafOuUqnrcK2f4SrknVXp0n/jYetN7pV0Ca8kH12jhBUZA80mEOz8B+21RgpBKBLWGaA=="],
 
-    "@discordeno/utils": ["@discordeno/utils@22.0.1-next.3edb0a9", "", { "dependencies": { "@discordeno/types": "22.0.1-next.3edb0a9" } }, "sha512-lRZT0u7Ths4a98QbTA/r3AbhdmstQFGYp4sjBIO9whRVRzlmi1s7mI3vYyYyX3bXzOqrpFf3tZeTw9Gpm/GejQ=="],
+    "@discordeno/utils": ["@discordeno/utils@22.0.1-next.a9a2561", "", { "dependencies": { "@discordeno/types": "22.0.1-next.a9a2561" } }, "sha512-EroeQoOy8KbJwlR+LWJBhr7lsJCkRtzaIOUyAJYBoiNgln9UphyU2qrjnM6TNGX4AEn4tuIR601Jg2WKngQ7UQ=="],
 
     "@drizzle-team/brocli": ["@drizzle-team/brocli@0.12.0", "", {}, "sha512-mlUE+rZ8CatQekLhnaiN91Iemdd+e2gFKooGlnRB3oPTL3VghLfX24dx7HrzMNeC1JrIB/0kpsfyty3f5HNfxQ=="],
 
@@ -214,8 +214,6 @@
 
     "fsevents": ["fsevents@2.3.3", "", { "os": "darwin" }, "sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw=="],
 
-    "fzstd": ["fzstd@0.1.1", "", {}, "sha512-dkuVSOKKwh3eas5VkJy1AW1vFpet8TA/fGmVA5krThl8YcOVE/8ZIoEA1+U1vEn5ckxxhLirSdY837azmbaNHA=="],
-
     "get-tsconfig": ["get-tsconfig@4.14.3", "", { "dependencies": { "resolve-pkg-maps": "^1.0.0" } }, "sha512-++QEw4DIY7WGoukz+/+A/8dGYPT9l9yIadnmSgZ8Rjr3YVSVDipQSO9CdnJo9ePqFqUUqh+wk9uIaoiAwsiPkA=="],
 
     "ioredis": ["ioredis@5.10.1", "", { "dependencies": { "@ioredis/commands": "1.5.1", "cluster-key-slot": "^1.1.0", "debug": "^4.3.4", "denque": "^2.1.0", "lodash.defaults": "^4.2.0", "lodash.isarguments": "^3.1.0", "redis-errors": "^1.2.0", "redis-parser": "^3.0.0", "standard-as-callback": "^2.1.0" } }, "sha512-HuEDBTI70aYdx1v6U97SbNx9F1+svQKBDo30o0b9fw055LMepzpOOd0Ccg9Q6tbqmBSJaMuY0fB7yw9/vjBYCA=="],
@@ -333,8 +331,6 @@
     "undici-types": ["undici-types@8.3.0", "", {}, "sha512-j375ScV60dom+YkPFIfTLcOiPxkN/buHz5GobjLhixFuANaNs3C9l4GmrWqejgXWJ7BbJcFYpTEUkS1Ge8bpZQ=="],
 
     "uuid": ["uuid@11.1.0", "", { "bin": { "uuid": "dist/esm/bin/uuid" } }, "sha512-0/A9rDy9P7cJ+8w1c9WD9V//9Wj15Ce2MPz8Ri6032usz+NfePxx5AcN3bN+r6ZL6jEo066/yNYB3tn4pQEx+A=="],
-
-    "ws": ["ws@8.20.0", "", { "peerDependencies": { "bufferutil": "^4.0.1", "utf-8-validate": ">=5.0.2" }, "optionalPeers": ["bufferutil", "utf-8-validate"] }, "sha512-sAt8BhgNbzCtgGbt2OxmpuryO63ZoDk/sqaB/znQm94T4fCEsy/yV+7CdC1kJhOU9lboAEU7R3kquuycDoibVA=="],
 
     "xtend": ["xtend@4.0.2", "", {}, "sha512-LKYU1iAXJXUgAXn9URjiu+MWhyUXHsvfp7mcuYm9dSUKK0/CjtrUwFAxD82/mCWbtLsGjFIad0wIsod4zrTAEQ=="],
 
