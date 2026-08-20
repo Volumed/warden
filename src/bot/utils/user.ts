@@ -1,5 +1,5 @@
+import type { User } from '../../db/index.js'
 import { en } from '../locales/index.js'
-import type { User } from '../postgresql/db'
 
 export const typeHierarchy = ['OWNER', 'SUPPORTER', 'CHEATER', 'LEAKER', 'OTHER', 'BOT']
 

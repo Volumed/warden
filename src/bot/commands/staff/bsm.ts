@@ -1,7 +1,7 @@
 import { ApplicationCommandOptionTypes, BitwisePermissionFlags } from '@discordeno/bot'
+import { addBadServer, type BadServer, getBadServerById } from '../../../db/index.js'
 import { bot } from '../../bot.js'
 import createCommand from '../../commands.js'
-import { addBadServer, type BadServer, getBadServerById } from '../../postgresql/db.js'
 import { get, set } from '../../redis/redis.js'
 import { commonComponent } from '../../utils/components.js'
 import { checkIfValidInvite, fetchInviteInfo, getInviteCode } from '../../utils/server.js'

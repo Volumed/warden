@@ -78,4 +78,4 @@ export const GATEWAY_INTENTS = Intents.Guilds | Intents.GuildMessages | Intents.
 
 // Database Configurations
 
-export const POSTGRES_URL = assertEnv('POSTGRES_URL')
+export const POSTGRES_URL = assertEnv('DATABASE_URL')

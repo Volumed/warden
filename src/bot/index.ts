@@ -1,10 +1,10 @@
 import { join as joinPath } from 'node:path'
 import type { DiscordGatewayPayload, GatewayDispatchEventNames } from '@discordeno/bot'
 import { EVENT_HANDLER_HOST, EVENT_HANDLER_PORT, MESSAGEQUEUE_ENABLE } from '../config.js'
+import { checkConnection } from '../db/index.js'
 import { getDirnameFromFileUrl } from '../util.js'
 import { bot } from './bot.js'
 import { buildFastifyApp } from './fastify.js'
-import { checkConnection } from './postgresql/db.js'
 import { createWorker } from './redis/mq.js'
 import importDirectory from './utils/loader.js'
 

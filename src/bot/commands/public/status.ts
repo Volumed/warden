@@ -1,7 +1,7 @@
 import { MessageComponentTypes, MessageFlags, snowflakeToTimestamp } from '@discordeno/bot'
+import { checkConnection, getTotalBadServers, getTotalBlacklistedUsers } from '../../../db/index.js'
 import { bot, getShardInfoFromGuild } from '../../bot.js'
 import createCommand from '../../commands.js'
-import { dbHealthCheck, getTotalBadServers, getTotalBlacklistedUsers } from '../../postgresql/db.js'
 import { get, healthCheck, set } from '../../redis/redis.js'
 import { componentColors } from '../../utils/colors.js'
 import { commonComponent } from '../../utils/components.js'
@@ -61,7 +61,7 @@ createCommand({
       const totalGuilds = await allGuilds()
       const memoryUsage = process.memoryUsage().heapUsed / 1024 / 1024
       const redisHealthy = await healthCheck()
-      const dbHealthy = await dbHealthCheck()
+      const dbHealthy = await checkConnection(true)
       const totalBadServersCount = await totalBadServers()
       const totalBlacklistedUsersCount = await totalBlacklistedUsers()
 

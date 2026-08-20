@@ -1,7 +1,7 @@
 import { ApplicationCommandOptionTypes, BitwisePermissionFlags } from '@discordeno/bot'
+import { getUserById, type User } from '../../../db/index.js'
 import { bot } from '../../bot.js'
 import createCommand from '../../commands.js'
-import { getUserById, type User } from '../../postgresql/db.js'
 import { commonComponent } from '../../utils/components.js'
 import { checkIfValidUserId } from '../../utils/user.js'
 

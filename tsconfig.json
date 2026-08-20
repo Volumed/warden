@@ -13,5 +13,6 @@
     "strict": true,
     "incremental": false,
     "types": ["node"]
-  }
+  },
+  "exclude": ["drizzle.config.ts"]
 }

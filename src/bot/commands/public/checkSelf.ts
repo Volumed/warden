@@ -1,7 +1,7 @@
 import { type Interaction, MessageComponentTypes, MessageFlags } from '@discordeno/bot'
+import { type BadServer, getServersByImportId, getUserById, type User } from '../../../db/index.js'
 import { bot } from '../../bot.js'
 import createCommand from '../../commands.js'
-import { type BadServer, getServersByImportId, getUserById, type User } from '../../postgresql/db.js'
 import { componentColors } from '../../utils/colors.js'
 import { commonComponent } from '../../utils/components.js'
 import { serverTypeMap } from '../../utils/server.js'

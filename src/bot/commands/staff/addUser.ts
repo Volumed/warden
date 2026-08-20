@@ -8,9 +8,9 @@ import {
   type SeparatorComponent,
   type TextDisplayComponent,
 } from '@discordeno/bot'
+import { addImport, addUser, getUserById, type User } from '../../../db/index.js'
 import { bot } from '../../bot.js'
 import createCommand from '../../commands.js'
-import { addImport, addUser, getUserById, type User } from '../../postgresql/db.js'
 import { get, set } from '../../redis/redis.js'
 import { componentColors } from '../../utils/colors.js'
 import { commonComponent } from '../../utils/components.js'
