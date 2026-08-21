@@ -421,11 +421,159 @@ export const showUserHistoryRoles = async (interaction: Interaction, importIndex
   })
 }
 
-createCommand({
-  name: 'checkuseradmin',
-  description: 'Check user as admin.',
-  defaultMemberPermissions: String(BitwisePermissionFlags.ADMINISTRATOR),
-  mainGuild: true,
+const checkUserAdminRun: Parameters<typeof createCommand>[0]['run'] = async (interaction, options) => {
+  const { user: userOption } = options as { user: { user: { id: bigint; toggles: { bitfield: number } } } }
+  const userId = userOption?.user?.id
+
+  if (!userId) {
+    const response = commonComponent({
+      color: 'orange',
+      content: 'Please provide a user ID.',
+    })
+    await interaction.respond(response)
+    return
+  }
+
+  if (!checkIfValidUserId(userId)) {
+    const response = commonComponent({
+      color: 'red',
+      content: 'Invalid user ID provided. Please provide a valid Discord user ID.',
+    })
+    await interaction.respond(response)
+    return
+  }
+
+  const isBot = userOption?.user?.toggles?.bitfield === 1
+  const botResponse = commonComponent({
+    color: 'orange',
+    content: `<@${userId}> is a bot. Bots are not subject to blacklisting. If you believe this is incorrect, please submit a support ticket.`,
+  })
+
+  if (isBot) {
+    await interaction.respond(botResponse)
+    return
+  }
+
+  await interaction.defer()
+
+  let user: User | null
+
+  try {
+    user = await getUserById(userId.toString())
+  } catch (err) {
+    bot.logger.error(`Error fetching user with ID ${userId}:`, err)
+    const response = commonComponent({
+      color: 'red',
+      content: 'An error occurred while fetching user information. Please try again later.',
+    })
+    await interaction.respond(response)
+    return
+  }
+
+  const notBlacklistedResponse = commonComponent({
+    color: 'blue',
+    content: [`### User <@${userId}> is not blacklisted.`].join('\n'),
+  })
+
+  let history: (Import & { server: BadServer | null })[] = []
+
+  try {
+    history = await getImportHistoryWithServerByUserId(userId.toString())
+  } catch (err) {
+    bot.logger.error(`Error fetching imports for user with ID ${userId}:`, err)
+    const response = commonComponent({
+      color: 'red',
+      content: 'An error occurred while fetching user imports. Please try again later.',
+    })
+    await interaction.respond(response)
+    return
+  }
+
+  if (!user || (user.status !== 'BLACKLISTED' && user.status !== 'PERM_BLACKLISTED')) {
+    if (user && history.length > 0) {
+      const cacheKey = String(interaction.id)
+      await set(
+        `${CHECK_USER_ADMIN_CACHE_PREFIX}${cacheKey}`,
+        JSON.stringify({ user, imports: [], history }),
+        CHECK_USER_ADMIN_CACHE_TTL,
+      )
+      await interaction.respond({
+        flags: MessageFlags.IsComponentsV2,
+        components: [
+          {
+            type: MessageComponentTypes.Container as const,
+            accentColor: componentColors.blue,
+            components: [
+              {
+                type: MessageComponentTypes.TextDisplay as const,
+                content: [
+                  `### User <@${userId}> is not blacklisted.`,
+                  `They have ${history.length} historical entr${history.length === 1 ? 'y' : 'ies'}.`,
+                ].join('\n'),
+              },
+              {
+                type: MessageComponentTypes.ActionRow as const,
+                components: [
+                  {
+                    type: MessageComponentTypes.Button as const,
+                    label: `View History (${history.length})`,
+                    customId: `checkuseradminhistorynb-first-0-${cacheKey}`,
+                    style: 2,
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      })
+      return
+    }
+    await interaction.respond(notBlacklistedResponse)
+    return
+  }
+
+  if (user.type === 'BOT') {
+    await interaction.respond(botResponse)
+    return
+  }
+
+  let imports: (Import & { server: BadServer | null })[] = []
+  try {
+    imports = await getImportsWithServerByUserId(userId.toString())
+  } catch (err) {
+    bot.logger.error(`Error fetching imports for user with ID ${userId}:`, err)
+    const response = commonComponent({
+      color: 'red',
+      content: 'An error occurred while fetching user imports. Please try again later.',
+    })
+    await interaction.respond(response)
+    return
+  }
+
+  if (imports.length === 0) {
+    const response = commonComponent({
+      color: 'blue',
+      content: [
+        `### User <@${userId}> is blacklisted, but no imports were found.`,
+        'User has been added to the appeal queue.',
+      ].join('\n'),
+    })
+    // TODO: Implement appeal queue and logic to handle the appeal process
+    await interaction.respond(response)
+    return
+  }
+
+  const cacheKey = String(interaction.id)
+  await set(
+    `${CHECK_USER_ADMIN_CACHE_PREFIX}${cacheKey}`,
+    JSON.stringify({ user, imports, history }),
+    CHECK_USER_ADMIN_CACHE_TTL,
+  )
+
+  await checkUserAdminMessage(interaction as Interaction, 0, cacheKey, true)
+}
+
+const checkUserAdminCommandOptions = {
   options: [
     {
       name: 'user',
@@ -434,155 +582,10 @@ createCommand({
       required: true,
     },
   ],
-  async run(interaction, options) {
-    const { user: userOption } = options as { user: { user: { id: bigint; toggles: { bitfield: number } } } }
-    const userId = userOption?.user?.id
+  defaultMemberPermissions: String(BitwisePermissionFlags.ADMINISTRATOR),
+  mainGuild: true,
+  run: checkUserAdminRun,
+}
 
-    if (!userId) {
-      const response = commonComponent({
-        color: 'orange',
-        content: 'Please provide a user ID.',
-      })
-      await interaction.respond(response)
-      return
-    }
-
-    if (!checkIfValidUserId(userId)) {
-      const response = commonComponent({
-        color: 'red',
-        content: 'Invalid user ID provided. Please provide a valid Discord user ID.',
-      })
-      await interaction.respond(response)
-      return
-    }
-
-    const isBot = userOption?.user?.toggles?.bitfield === 1
-    const botResponse = commonComponent({
-      color: 'orange',
-      content: `<@${userId}> is a bot. Bots are not subject to blacklisting. If you believe this is incorrect, please submit a support ticket.`,
-    })
-
-    if (isBot) {
-      await interaction.respond(botResponse)
-      return
-    }
-
-    await interaction.defer()
-
-    let user: User | null
-
-    try {
-      user = await getUserById(userId.toString())
-    } catch (err) {
-      bot.logger.error(`Error fetching user with ID ${userId}:`, err)
-      const response = commonComponent({
-        color: 'red',
-        content: 'An error occurred while fetching user information. Please try again later.',
-      })
-      await interaction.respond(response)
-      return
-    }
-
-    const notBlacklistedResponse = commonComponent({
-      color: 'blue',
-      content: [`### User <@${userId}> is not blacklisted.`].join('\n'),
-    })
-
-    let history: (Import & { server: BadServer | null })[] = []
-
-    try {
-      history = await getImportHistoryWithServerByUserId(userId.toString())
-    } catch (err) {
-      bot.logger.error(`Error fetching imports for user with ID ${userId}:`, err)
-      const response = commonComponent({
-        color: 'red',
-        content: 'An error occurred while fetching user imports. Please try again later.',
-      })
-      await interaction.respond(response)
-      return
-    }
-
-    if (!user || (user.status !== 'BLACKLISTED' && user.status !== 'PERM_BLACKLISTED')) {
-      if (user && history.length > 0) {
-        const cacheKey = String(interaction.id)
-        await set(
-          `${CHECK_USER_ADMIN_CACHE_PREFIX}${cacheKey}`,
-          JSON.stringify({ user, imports: [], history }),
-          CHECK_USER_ADMIN_CACHE_TTL,
-        )
-        await interaction.respond({
-          flags: MessageFlags.IsComponentsV2,
-          components: [
-            {
-              type: MessageComponentTypes.Container as const,
-              accentColor: componentColors.blue,
-              components: [
-                {
-                  type: MessageComponentTypes.TextDisplay as const,
-                  content: [
-                    `### User <@${userId}> is not blacklisted.`,
-                    `They have ${history.length} historical entr${history.length === 1 ? 'y' : 'ies'}.`,
-                  ].join('\n'),
-                },
-                {
-                  type: MessageComponentTypes.ActionRow as const,
-                  components: [
-                    {
-                      type: MessageComponentTypes.Button as const,
-                      label: `View History (${history.length})`,
-                      customId: `checkuseradminhistorynb-first-0-${cacheKey}`,
-                      style: 2,
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-        })
-        return
-      }
-      await interaction.respond(notBlacklistedResponse)
-      return
-    }
-
-    if (user.type === 'BOT') {
-      await interaction.respond(botResponse)
-      return
-    }
-
-    let imports: (Import & { server: BadServer | null })[] = []
-    try {
-      imports = await getImportsWithServerByUserId(userId.toString())
-    } catch (err) {
-      bot.logger.error(`Error fetching imports for user with ID ${userId}:`, err)
-      const response = commonComponent({
-        color: 'red',
-        content: 'An error occurred while fetching user imports. Please try again later.',
-      })
-      await interaction.respond(response)
-      return
-    }
-
-    if (imports.length === 0) {
-      const response = commonComponent({
-        color: 'blue',
-        content: [
-          `### User <@${userId}> is blacklisted, but no imports were found.`,
-          'User has been added to the appeal queue.',
-        ].join('\n'),
-      })
-      // TODO: Implement appeal queue and logic to handle the appeal process
-      await interaction.respond(response)
-      return
-    }
-
-    const cacheKey = String(interaction.id)
-    await set(
-      `${CHECK_USER_ADMIN_CACHE_PREFIX}${cacheKey}`,
-      JSON.stringify({ user, imports, history }),
-      CHECK_USER_ADMIN_CACHE_TTL,
-    )
-
-    await checkUserAdminMessage(interaction as Interaction, 0, cacheKey, true)
-  },
-})
+createCommand({ name: 'checkuseradmin', description: 'Check user as admin.', ...checkUserAdminCommandOptions })
+createCommand({ name: 'cua', description: 'Alias for /checkuseradmin.', ...checkUserAdminCommandOptions })

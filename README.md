@@ -12,31 +12,28 @@
 
 ### Public Commands
 
-`/about`
-`/badservers`
-`/checkserver`
-`/checkuser`
-`/invite`
-`/ping`
-`/checkself`
+`/about`<br>
+`/badservers`<br>
+`/checkserver`<br>
+`/checkuser`<br>
+`/invite`<br>
+`/ping`<br>
+`/checkself`<br>
 `/status`
 
 ### Staff Commands
 
-`/adduser`
-`/appeal`
-`/bsm`
-`/checkserveradmin`
-`/checkuseradmin`
-`/forcecheck`
-`/multiadduser`
-`/multicheckuseradmin`
-`/multiforcecheck`
-`/note`
-`/updateservername`
+`/adduser`<br>
+`/appeal`<br>
+`/bsm`<br>
+`/checkserveradmin` alias: `/csa`<br>
+`/checkuseradmin` alias: `/cua`<br>
+`/forcecheck`<br>
+`/note`<br>
+`/updateservername`<br>
 `/upstatus`
 
-### Admin Commands
+### User Commands
 
-`/config`
+`/config`<br>
 `/scanusers`
