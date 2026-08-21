@@ -649,7 +649,7 @@ const checkUserAdminRun: Parameters<typeof createCommand>[0]['run'] = async (int
   const isBot = userOption?.user?.toggles?.bitfield === 1
   const botResponse = commonComponent({
     color: 'orange',
-    content: `<@${userId}> is a bot. Bots are not subject to blacklisting. If you believe this is incorrect, please submit a support ticket.`,
+    content: `<@${userId}> is a bot. Bots are not subject to blacklisting.`,
   })
 
   if (isBot) {

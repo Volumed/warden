@@ -1,0 +1,101 @@
+import { ApplicationCommandOptionTypes, BitwisePermissionFlags } from '@discordeno/bot'
+import { getUserById, type User } from '../../../db/index.js'
+import { bot } from '../../bot.js'
+import createCommand from '../../commands.js'
+import { commonComponent } from '../../utils/components.js'
+import { checkIfValidUserId } from '../../utils/user.js'
+
+createCommand({
+  name: 'forcecheck',
+  description: 'Force checks a blacklisted user.',
+  defaultMemberPermissions: String(BitwisePermissionFlags.ADMINISTRATOR),
+  mainGuild: true,
+  options: [
+    {
+      name: 'user',
+      description: 'The user to check.',
+      type: ApplicationCommandOptionTypes.User,
+      required: true,
+    },
+  ],
+  async run(interaction, options) {
+    const { user: userOption } = options as { user: { user: { id: bigint; toggles: { bitfield: number } } } }
+    const userId = userOption?.user?.id
+
+    if (!userId) {
+      const response = commonComponent({
+        color: 'orange',
+        content: 'Please provide a user ID.',
+      })
+      await interaction.respond(response)
+      return
+    }
+
+    if (!checkIfValidUserId(userId)) {
+      const response = commonComponent({
+        color: 'red',
+        content: 'Invalid user ID provided. Please provide a valid Discord user ID.',
+      })
+      await interaction.respond(response)
+      return
+    }
+
+    const isBot = userOption?.user?.toggles?.bitfield === 1
+    const botResponse = commonComponent({
+      color: 'orange',
+      content: `<@${userId}> is a bot. Bots are not subject to blacklisting.`,
+    })
+
+    if (isBot) {
+      await interaction.respond(botResponse)
+      return
+    }
+
+    await interaction.defer()
+
+    let user: User | null
+
+    try {
+      user = await getUserById(userId.toString())
+    } catch (err) {
+      bot.logger.error(`Error fetching user with ID ${userId}:`, err)
+      const response = commonComponent({
+        color: 'red',
+        content: 'An error occurred while fetching user information. Please try again later.',
+      })
+      await interaction.respond(response)
+      return
+    }
+
+    const notBlacklistedResponse = commonComponent({
+      color: 'blue',
+      content: [
+        `### User <@${userId}> is not blacklisted.`,
+        `You can't force check a user that is not blacklisted.`,
+      ].join('\n'),
+    })
+
+    if (!user || (user.status !== 'BLACKLISTED' && user.status !== 'PERM_BLACKLISTED')) {
+      await interaction.respond(notBlacklistedResponse)
+      return
+    }
+
+    if (user.type === 'BOT') {
+      await interaction.respond(botResponse)
+      return
+    }
+
+    if (user.status !== 'BLACKLISTED' && user.status !== 'PERM_BLACKLISTED') {
+      await interaction.respond(notBlacklistedResponse)
+      return
+    }
+
+    // TODO: Implement force check queue and logic to handle the force check process
+
+    const response = commonComponent({
+      color: 'blue',
+      content: `### PLACEHOLDER`,
+    })
+    await interaction.respond(response)
+  },
+})
