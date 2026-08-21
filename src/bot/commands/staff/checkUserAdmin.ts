@@ -13,6 +13,8 @@ import {
   getImportHistoryWithServerByUserId,
   getImportsWithServerByUserId,
   getUserById,
+  getUserImportsCountById,
+  getUserImportsTypesById,
   type Import,
   type User,
 } from '../../../db/index.js'
@@ -26,10 +28,20 @@ import { checkIfValidUserId, mapUserStatus, mapUserTypes } from '../../utils/use
 
 export const CHECK_USER_ADMIN_CACHE_PREFIX = 'checkuseradmin:'
 export const CHECK_USER_ADMIN_CACHE_TTL = 300 // 5 minutes
+export const BULK_CHECK_USERS_CACHE_PREFIX = 'bulkcheckuseradmin:'
+export const BULK_CHECK_USERS_CACHE_TTL = 300 // 5 minutes
 
-const MAX_BULK_PER_PAGE = 5
+const MAX_SERVERS_PER_PAGE = 5
 const CHECK_USER_ADMIN_CACHE_TTL_WARN = 30 // disable buttons when ≤30s remain
 const sessionState = new Map<string, { page: number; view: 'main' | 'history' }>()
+
+const MAX_BULK_USERS_PER_PAGE = 6
+const BULK_CHECK_USERS_CACHE_TTL_WARN = 30
+const bulkCheckUsersPage = new Map<string, number>()
+
+export interface BulkCheckUsersResult {
+  results: Array<{ userId: string; user: User | null; importCount: number; importTypes: Import['type'][] }>
+}
 
 const pushImportEntries = (
   containerComponents: Array<TextDisplayComponent | SeparatorComponent | ActionRow>,
@@ -41,7 +53,7 @@ const pushImportEntries = (
 ) => {
   for (let i = 0; i < entries.length; i++) {
     const imported = entries[i]
-    const globalIndex = page * MAX_BULK_PER_PAGE + i
+    const globalIndex = page * MAX_SERVERS_PER_PAGE + i
     const importRoles = imported.roles
       ? imported.roles
           .split(',')
@@ -111,9 +123,9 @@ export const checkUserAdminMessage = async (
     imports: (Import & { server: BadServer | null })[]
     history: (Import & { server: BadServer | null })[]
   }
-  const totalPages = Math.max(1, Math.ceil(imports.length / MAX_BULK_PER_PAGE))
+  const totalPages = Math.max(1, Math.ceil(imports.length / MAX_SERVERS_PER_PAGE))
   const isLastPage = page >= totalPages - 1
-  const pageServers = imports.slice(page * MAX_BULK_PER_PAGE, (page + 1) * MAX_BULK_PER_PAGE)
+  const pageServers = imports.slice(page * MAX_SERVERS_PER_PAGE, (page + 1) * MAX_SERVERS_PER_PAGE)
 
   const containerComponents: Array<TextDisplayComponent | SeparatorComponent | ActionRow> = []
 
@@ -284,9 +296,9 @@ export const checkUserAdminHistoryMessage = async (
     imports: (Import & { server: BadServer | null })[]
     history: (Import & { server: BadServer | null })[]
   }
-  const totalPages = Math.max(1, Math.ceil(history.length / MAX_BULK_PER_PAGE))
+  const totalPages = Math.max(1, Math.ceil(history.length / MAX_SERVERS_PER_PAGE))
   const isLastPage = page >= totalPages - 1
-  const pageEntries = history.slice(page * MAX_BULK_PER_PAGE, (page + 1) * MAX_BULK_PER_PAGE)
+  const pageEntries = history.slice(page * MAX_SERVERS_PER_PAGE, (page + 1) * MAX_SERVERS_PER_PAGE)
 
   const importTypes = imports.map((imp) => imp.type)
   const userTypeMapping = mapUserTypes([user.type, ...importTypes])
@@ -421,8 +433,199 @@ export const showUserHistoryRoles = async (interaction: Interaction, importIndex
   })
 }
 
+export const bulkCheckUsersMessage = async (
+  interaction: Interaction,
+  page: number,
+  cacheKey: string,
+  newMessage: boolean,
+) => {
+  const cached = await get(`${BULK_CHECK_USERS_CACHE_PREFIX}${cacheKey}`)
+
+  if (!cached) {
+    const response = commonComponent({
+      color: 'orange',
+      content: 'This bulk check session has expired. Please run the command again.',
+    })
+    if (newMessage) await interaction.respond(response)
+    else await interaction.edit(response)
+    return
+  }
+
+  const remaining = await ttl(`${BULK_CHECK_USERS_CACHE_PREFIX}${cacheKey}`)
+  const isExpiring = remaining >= 0 && remaining <= BULK_CHECK_USERS_CACHE_TTL_WARN
+
+  const { results } = JSON.parse(cached) as BulkCheckUsersResult
+  const blacklistedCount = results.filter(
+    (r) => r.user && (r.user.status === 'BLACKLISTED' || r.user.status === 'PERM_BLACKLISTED'),
+  ).length
+  const totalPages = Math.max(1, Math.ceil(results.length / MAX_BULK_USERS_PER_PAGE))
+  const isLastPage = page >= totalPages - 1
+  const pageResults = results.slice(page * MAX_BULK_USERS_PER_PAGE, (page + 1) * MAX_BULK_USERS_PER_PAGE)
+
+  const containerComponents: Array<TextDisplayComponent | SeparatorComponent | ActionRow> = []
+
+  containerComponents.push({
+    type: MessageComponentTypes.TextDisplay as const,
+    content: `### Bulk check — ${blacklistedCount} blacklisted of ${results.length}`,
+  })
+
+  if (pageResults.length > 0) {
+    containerComponents.push({ type: MessageComponentTypes.Separator as const })
+    for (let i = 0; i < pageResults.length; i++) {
+      const { userId, user, importCount, importTypes } = pageResults[i]
+      const userTypeMapping = user ? mapUserTypes([user.type, ...importTypes]) : null
+
+      containerComponents.push({
+        type: MessageComponentTypes.TextDisplay as const,
+        content: [
+          `<@${userId}>`,
+          `-# ID: ${userId}${importCount ? ` · ${importCount} server${importCount === 1 ? '' : 's'}` : ''}`,
+          `${user !== null ? `> **Status**: \`\`${mapUserStatus(user.status)}\`\`` : '> Not found'}`,
+          userTypeMapping
+            ? `> **Type${userTypeMapping.length > 1 ? 's' : ''}**: \`\`${userTypeMapping.map((type) => type?.label).join(', ')}\`\``
+            : null,
+        ]
+          .filter(Boolean)
+          .join('\n'),
+      })
+      if (i < pageResults.length - 1) {
+        containerComponents.push({ type: MessageComponentTypes.Separator as const })
+      }
+    }
+  }
+
+  if (totalPages > 1) {
+    containerComponents.push({ type: MessageComponentTypes.Separator as const })
+    containerComponents.push({
+      type: MessageComponentTypes.ActionRow as const,
+      components: [
+        {
+          type: MessageComponentTypes.Button as const,
+          label: '❮',
+          customId: `bulkcheckuseradmin-previous-${page}-${cacheKey}`,
+          style: 1,
+          disabled: page === 0 || isExpiring,
+        },
+        {
+          type: MessageComponentTypes.Button as const,
+          label: '❮❮',
+          customId: `bulkcheckuseradmin-first-0-${cacheKey}`,
+          style: 2,
+          disabled: page === 0 || isExpiring,
+        },
+        {
+          type: MessageComponentTypes.Button as const,
+          label: `${page + 1} / ${totalPages}`,
+          customId: 'bulkcheckuseradmin-page-indicator',
+          style: 2,
+          disabled: true,
+        },
+        {
+          type: MessageComponentTypes.Button as const,
+          label: '❯❯',
+          customId: `bulkcheckuseradmin-last-${totalPages - 1}-${cacheKey}`,
+          style: 2,
+          disabled: isLastPage || isExpiring,
+        },
+        {
+          type: MessageComponentTypes.Button as const,
+          label: '❯',
+          customId: `bulkcheckuseradmin-next-${page}-${cacheKey}`,
+          style: 1,
+          disabled: isLastPage || isExpiring,
+        },
+      ],
+    })
+  }
+
+  const response = {
+    flags: MessageFlags.IsComponentsV2,
+    components: [
+      {
+        type: MessageComponentTypes.Container as const,
+        accentColor: blacklistedCount > 0 ? componentColors.blue : componentColors.orange,
+        components: containerComponents,
+      },
+    ],
+  }
+
+  bulkCheckUsersPage.set(cacheKey, page)
+
+  if (newMessage) {
+    await interaction.respond(response)
+    // Proactively disable all buttons before the cache expires
+    setTimeout(
+      () => {
+        bulkCheckUsersMessage(interaction, bulkCheckUsersPage.get(cacheKey) ?? page, cacheKey, false).catch(() => {})
+        bulkCheckUsersPage.delete(cacheKey)
+      },
+      (BULK_CHECK_USERS_CACHE_TTL - BULK_CHECK_USERS_CACHE_TTL_WARN) * 1000,
+    )
+  } else {
+    await interaction.edit(response)
+  }
+}
+
 const checkUserAdminRun: Parameters<typeof createCommand>[0]['run'] = async (interaction, options) => {
-  const { user: userOption } = options as { user: { user: { id: bigint; toggles: { bitfield: number } } } }
+  const typedOptions = options as {
+    check?: { user?: { user: { id: bigint; toggles: { bitfield: number } } } }
+    bulk?: { user_ids?: string }
+  }
+
+  if (typedOptions.bulk !== undefined) {
+    const { user_ids: userIdsRaw } = typedOptions.bulk
+
+    if (!userIdsRaw) {
+      await interaction.respond(
+        commonComponent({ color: 'orange', content: 'Please provide comma-separated user IDs.' }),
+      )
+      return
+    }
+
+    const userIds = [
+      ...new Set(
+        userIdsRaw
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean),
+      ),
+    ]
+    const invalidIds = userIds.filter((id) => !/^\d{17,19}$/.test(id))
+
+    if (invalidIds.length > 0) {
+      await interaction.respond(
+        commonComponent({
+          color: 'orange',
+          content: `Invalid user IDs: ${invalidIds.map((id) => `\`${id}\``).join(', ')}`,
+        }),
+      )
+      return
+    }
+
+    await interaction.defer()
+
+    const results = await Promise.all(
+      userIds.map(async (userId) => {
+        const [user, importCount, importTypes] = await Promise.all([
+          getUserById(userId).catch(() => null),
+          getUserImportsCountById(userId).catch(() => 0),
+          getUserImportsTypesById(userId).catch(() => []),
+        ])
+        return { userId, user, importCount, importTypes }
+      }),
+    )
+
+    const cacheKey = String(interaction.id)
+    await set(`${BULK_CHECK_USERS_CACHE_PREFIX}${cacheKey}`, JSON.stringify({ results }), BULK_CHECK_USERS_CACHE_TTL)
+
+    await bulkCheckUsersMessage(interaction as Interaction, 0, cacheKey, true)
+    return
+  }
+
+  // check subcommand
+  const { user: userOption } = (typedOptions.check ?? {}) as {
+    user?: { user: { id: bigint; toggles: { bitfield: number } } }
+  }
   const userId = userOption?.user?.id
 
   if (!userId) {
@@ -576,10 +779,30 @@ const checkUserAdminRun: Parameters<typeof createCommand>[0]['run'] = async (int
 const checkUserAdminCommandOptions = {
   options: [
     {
-      name: 'user',
-      description: 'The user to check.',
-      type: ApplicationCommandOptionTypes.User,
-      required: true,
+      name: 'check',
+      description: 'Check a single user by ID.',
+      type: ApplicationCommandOptionTypes.SubCommand,
+      options: [
+        {
+          name: 'user',
+          description: 'The user to check.',
+          type: ApplicationCommandOptionTypes.User,
+          required: true,
+        },
+      ],
+    },
+    {
+      name: 'bulk',
+      description: 'Check multiple users at once via comma-separated IDs.',
+      type: ApplicationCommandOptionTypes.SubCommand,
+      options: [
+        {
+          name: 'user_ids',
+          description: 'Comma-separated user IDs to check.',
+          type: ApplicationCommandOptionTypes.String,
+          required: false,
+        },
+      ],
     },
   ],
   defaultMemberPermissions: String(BitwisePermissionFlags.ADMINISTRATOR),
