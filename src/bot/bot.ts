@@ -19,7 +19,6 @@ import type { Command } from './commands.js'
 const rawBot = createBot({
   token: DISCORD_TOKEN,
   intents: GATEWAY_INTENTS,
-  // TEMPLATE-SETUP: Add/Remove the desired properties that you don't need
   desiredProperties: {
     interaction: {
       id: true,
@@ -96,8 +95,6 @@ export type CustomBot = typeof _proxyCacheBot & {
 }
 
 export const bot = _proxyCacheBot as unknown as CustomBot
-
-// TEMPLATE-SETUP: If you want/need to add any custom properties on the Bot type, you can do it in these lines below and the `CustomBot` type below. Make sure to do it in both or else you will get an error by TypeScript
 
 bot.commands = new Collection()
 

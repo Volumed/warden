@@ -11,7 +11,7 @@ import {
 import { type BadServer, getBadServerById } from '../../../db/index.js'
 import { bot } from '../../bot.js'
 import createCommand from '../../commands.js'
-import { get, set } from '../../redis/redis.js'
+import { get, set, ttl } from '../../redis/redis.js'
 import { componentColors } from '../../utils/colors.js'
 import { commonComponent } from '../../utils/components.js'
 import {
@@ -21,13 +21,15 @@ import {
   getInviteCode,
   serverTypeMap,
 } from '../../utils/server.js'
-
 import { GUILD_INVITE_CACHE_PREFIX, GUILD_INVITE_CACHE_TTL } from '../public/checkServer.js'
 
 const MAX_BULK_PER_PAGE = 5
 
 export const BULK_CHECK_SERVERS_CACHE_PREFIX = 'bulkcheckservers:'
 export const BULK_CHECK_SERVERS_CACHE_TTL = 300 // 5 minutes
+const BULK_CHECK_SERVERS_CACHE_TTL_WARN = 30 // disable buttons when ≤30s remain
+
+const bulkCheckServersPage = new Map<string, number>()
 
 export interface BulkCheckServersResult {
   found: Array<{ badServer: BadServer; guildId: string }>
@@ -51,6 +53,9 @@ export const bulkCheckServersMessage = async (
     else await interaction.edit(response)
     return
   }
+
+  const remaining = await ttl(`${BULK_CHECK_SERVERS_CACHE_PREFIX}${cacheKey}`)
+  const isExpiring = remaining >= 0 && remaining <= BULK_CHECK_SERVERS_CACHE_TTL_WARN
 
   const { found, notFound, failedInvites } = JSON.parse(cached) as BulkCheckServersResult
   const totalPages = Math.max(1, Math.ceil(found.length / MAX_BULK_PER_PAGE))
@@ -111,14 +116,14 @@ export const bulkCheckServersMessage = async (
           label: '❮',
           customId: `bulkcheckservers-previous-${page}-${cacheKey}`,
           style: 1,
-          disabled: page === 0,
+          disabled: page === 0 || isExpiring,
         },
         {
           type: MessageComponentTypes.Button as const,
           label: '❮❮',
           customId: `bulkcheckservers-first-0-${cacheKey}`,
           style: 2,
-          disabled: page === 0,
+          disabled: page === 0 || isExpiring,
         },
         {
           type: MessageComponentTypes.Button as const,
@@ -132,14 +137,14 @@ export const bulkCheckServersMessage = async (
           label: '❯❯',
           customId: `bulkcheckservers-last-${totalPages - 1}-${cacheKey}`,
           style: 2,
-          disabled: isLastPage,
+          disabled: isLastPage || isExpiring,
         },
         {
           type: MessageComponentTypes.Button as const,
           label: '❯',
           customId: `bulkcheckservers-next-${page}-${cacheKey}`,
           style: 1,
-          disabled: isLastPage,
+          disabled: isLastPage || isExpiring,
         },
       ],
     })
@@ -156,8 +161,23 @@ export const bulkCheckServersMessage = async (
     ],
   }
 
-  if (newMessage) await interaction.respond(response)
-  else await interaction.edit(response)
+  bulkCheckServersPage.set(cacheKey, page)
+
+  if (newMessage) {
+    await interaction.respond(response)
+    // Proactively disable all buttons before the cache expires
+    setTimeout(
+      () => {
+        bulkCheckServersMessage(interaction, bulkCheckServersPage.get(cacheKey) ?? page, cacheKey, false).catch(
+          () => {},
+        )
+        bulkCheckServersPage.delete(cacheKey)
+      },
+      (BULK_CHECK_SERVERS_CACHE_TTL - BULK_CHECK_SERVERS_CACHE_TTL_WARN) * 1000,
+    )
+  } else {
+    await interaction.edit(response)
+  }
 }
 
 createCommand({

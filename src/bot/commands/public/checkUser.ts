@@ -87,7 +87,7 @@ createCommand({
       ].join('\n'),
     })
 
-    if (!user) {
+    if (!user || (user.status !== 'BLACKLISTED' && user.status !== 'PERM_BLACKLISTED')) {
       await interaction.respond(notBlacklistedResponse)
       return
     }

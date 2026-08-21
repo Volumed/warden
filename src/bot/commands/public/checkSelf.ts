@@ -175,12 +175,7 @@ createCommand({
       content: ['### You are not blacklisted.'].join('\n'),
     })
 
-    if (!user) {
-      await interaction.respond(notBlacklistedResponse)
-      return
-    }
-
-    if (user.status !== 'BLACKLISTED' && user.status !== 'PERM_BLACKLISTED') {
+    if (!user || (user.status !== 'BLACKLISTED' && user.status !== 'PERM_BLACKLISTED')) {
       await interaction.respond(notBlacklistedResponse)
       return
     }

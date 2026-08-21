@@ -19,6 +19,10 @@ export const del = async (key: string): Promise<void> => {
   await redis.del(key)
 }
 
+export const ttl = async (key: string): Promise<number> => {
+  return redis.ttl(key)
+}
+
 export const healthCheck = async (): Promise<boolean> => {
   try {
     const result = await redis.ping()

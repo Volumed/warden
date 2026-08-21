@@ -21,7 +21,7 @@ const checkConnection = async (health?: boolean): Promise<boolean | undefined> =
 }
 
 // Bad server functions
-export const getAllBadServers = async (): Promise<BadServer[]> => {
+const getAllBadServers = async (): Promise<BadServer[]> => {
   try {
     return await db.select().from(badservers)
   } catch (err) {
@@ -30,7 +30,7 @@ export const getAllBadServers = async (): Promise<BadServer[]> => {
   }
 }
 
-export const getBadServerById = async (id: string): Promise<BadServer | null> => {
+const getBadServerById = async (id: string): Promise<BadServer | null> => {
   try {
     const result = await db.select().from(badservers).where(eq(badservers.id, id)).limit(1)
     return result[0] ?? null
@@ -40,7 +40,7 @@ export const getBadServerById = async (id: string): Promise<BadServer | null> =>
   }
 }
 
-export const getTotalBadServers = async (): Promise<number> => {
+const getTotalBadServers = async (): Promise<number> => {
   try {
     const result = await db.select({ count: count() }).from(badservers)
     return result[0].count
@@ -50,7 +50,7 @@ export const getTotalBadServers = async (): Promise<number> => {
   }
 }
 
-export const addBadServer = async (
+const addBadServer = async (
   badServer: Omit<typeof badservers.$inferInsert, 'createdat' | 'updatedat'>,
 ): Promise<void> => {
   try {
@@ -63,7 +63,7 @@ export const addBadServer = async (
 }
 
 // User functions
-export const getUserById = async (id: string): Promise<User | null> => {
+const getUserById = async (id: string): Promise<User | null> => {
   try {
     const result = await db.select().from(users).where(eq(users.id, id)).limit(1)
     return result[0] ?? null
@@ -73,7 +73,7 @@ export const getUserById = async (id: string): Promise<User | null> => {
   }
 }
 
-export const getTotalBlacklistedUsers = async (): Promise<number> => {
+const getTotalBlacklistedUsers = async (): Promise<number> => {
   try {
     const result = await db
       .select({ count: count() })
@@ -86,7 +86,8 @@ export const getTotalBlacklistedUsers = async (): Promise<number> => {
   }
 }
 
-export const addUser = async (user: typeof users.$inferInsert): Promise<void> => {
+// User functions
+const addUser = async (user: typeof users.$inferInsert): Promise<void> => {
   try {
     await db.insert(users).values(user)
     bot.logger.info(`User with ID ${user.id} added successfully`)
@@ -96,7 +97,7 @@ export const addUser = async (user: typeof users.$inferInsert): Promise<void> =>
 }
 
 // Import functions
-export const getUserImportsCountById = async (id: string): Promise<number> => {
+const getUserImportsCountById = async (id: string): Promise<number> => {
   try {
     const result = await db
       .select({ count: count() })
@@ -109,7 +110,7 @@ export const getUserImportsCountById = async (id: string): Promise<number> => {
   }
 }
 
-export const getUserImportsTypesById = async (id: string): Promise<Import['type'][]> => {
+const getUserImportsTypesById = async (id: string): Promise<Import['type'][]> => {
   try {
     const result = await db
       .select({ type: imports.type })
@@ -122,7 +123,7 @@ export const getUserImportsTypesById = async (id: string): Promise<Import['type'
   }
 }
 
-export const getUserImportsById = async (id: string): Promise<Import[]> => {
+const getUserImportsById = async (id: string): Promise<Import[]> => {
   try {
     return await db
       .select()
@@ -134,9 +135,7 @@ export const getUserImportsById = async (id: string): Promise<Import[]> => {
   }
 }
 
-export const addImport = async (
-  importData: Omit<typeof imports.$inferInsert, 'createdat' | 'updatedat'>,
-): Promise<void> => {
+const addImport = async (importData: Omit<typeof imports.$inferInsert, 'createdat' | 'updatedat'>): Promise<void> => {
   try {
     const now = new Date()
     await db.insert(imports).values({ ...importData, createdat: now, updatedat: now })
@@ -146,7 +145,7 @@ export const addImport = async (
   }
 }
 
-export const getServerRoleImportsById = async (
+const getServerRoleImportsById = async (
   id: string,
 ): Promise<{ type: Import['type']; server_type: BadServer['type'] | null }[]> => {
   try {
@@ -161,7 +160,7 @@ export const getServerRoleImportsById = async (
   }
 }
 
-export const getServersByImportId = async (id: string): Promise<BadServer[]> => {
+const getServersByImportId = async (id: string): Promise<BadServer[]> => {
   try {
     const result = await db
       .select(getTableColumns(badservers))
@@ -175,4 +174,54 @@ export const getServersByImportId = async (id: string): Promise<BadServer[]> => 
   }
 }
 
-export { checkConnection, db }
+const getImportsWithServerByUserId = async (id: string): Promise<(Import & { server: BadServer | null })[]> => {
+  try {
+    const result = await db
+      .select({ ...getTableColumns(imports), server: badservers })
+      .from(imports)
+      .leftJoin(badservers, eq(badservers.id, imports.server))
+      .where(and(eq(imports.id, id), eq(imports.appealed, false)))
+    return result.map((r) => ({ ...r, server: r.server?.id ? r.server : null })) as (Import & {
+      server: BadServer | null
+    })[]
+  } catch (err) {
+    bot.logger.error(`Error fetching imports with server for user ID ${id}:`, err)
+    return []
+  }
+}
+
+const getImportHistoryWithServerByUserId = async (id: string): Promise<(Import & { server: BadServer | null })[]> => {
+  try {
+    const result = await db
+      .select({ ...getTableColumns(imports), server: badservers })
+      .from(imports)
+      .leftJoin(badservers, eq(badservers.id, imports.server))
+      .where(and(eq(imports.id, id), eq(imports.appealed, true)))
+    return result.map((r) => ({ ...r, server: r.server?.id ? r.server : null })) as (Import & {
+      server: BadServer | null
+    })[]
+  } catch (err) {
+    bot.logger.error(`Error fetching import history with server for user ID ${id}:`, err)
+    return []
+  }
+}
+
+export {
+  addBadServer,
+  addImport,
+  addUser,
+  checkConnection,
+  db,
+  getAllBadServers,
+  getBadServerById,
+  getImportHistoryWithServerByUserId,
+  getImportsWithServerByUserId,
+  getServerRoleImportsById,
+  getServersByImportId,
+  getTotalBadServers,
+  getTotalBlacklistedUsers,
+  getUserById,
+  getUserImportsById,
+  getUserImportsCountById,
+  getUserImportsTypesById,
+}

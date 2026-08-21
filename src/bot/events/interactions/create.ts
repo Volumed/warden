@@ -11,7 +11,13 @@ import { bot } from '../../bot.js'
 import { badServersMessage } from '../../commands/public/badServers.js'
 import { checkSelfMessage } from '../../commands/public/checkSelf.js'
 import { addUserBulkMessage } from '../../commands/staff/addUser.js'
-import { bulkCheckServersMessage } from '../../commands/staff/checkserveradmin.js'
+import { bulkCheckServersMessage } from '../../commands/staff/checkServerAdmin.js'
+import {
+  checkUserAdminHistoryMessage,
+  checkUserAdminMessage,
+  showUserHistoryRoles,
+  showUserImportRoles,
+} from '../../commands/staff/checkUserAdmin.js'
 import { commonComponent } from '../../utils/components.js'
 
 const logCommand = (
@@ -147,6 +153,144 @@ bot.events.interactionCreate = async (interaction) => {
         const response = commonComponent({
           color: 'red',
           content: 'Something went wrong while fetching the bulk add results.',
+        })
+        await interaction.respond(response)
+      }
+    }
+
+    if (interaction.data?.customId?.startsWith('checkuseradminhistorynb-roles-')) {
+      const parts = interaction.data.customId.split('-')
+      const importIndex = Number(parts[2])
+      const cacheKey = parts[3]
+
+      try {
+        return await showUserHistoryRoles(interaction as Interaction, importIndex, cacheKey)
+      } catch (error: any) {
+        if (error?.cause?.body?.code === 10062) return
+        logCommand(interaction, 'Failure', 'Check user admin history (nb) roles', LogLevels.Error, error)
+        const response = commonComponent({ color: 'red', content: 'Something went wrong while fetching the roles.' })
+        await interaction.respond(response)
+      }
+    }
+
+    if (
+      interaction.data?.customId?.startsWith('checkuseradminhistorynb-') &&
+      !interaction.data.customId.startsWith('checkuseradminhistorynb-page-') &&
+      !interaction.data.customId.startsWith('checkuseradminhistorynb-roles-')
+    ) {
+      const parts = interaction.data.customId.split('-')
+      const direction = parts[1]
+      let page = Number(parts[2])
+      const cacheKey = parts[3]
+
+      if (direction === 'previous') {
+        page = Math.max(page - 1, 0)
+      } else if (direction === 'next') {
+        page = page + 1
+      } else if (direction === 'first') {
+        page = 0
+      }
+
+      try {
+        return await checkUserAdminHistoryMessage(interaction as Interaction, page, cacheKey, false, false)
+      } catch (error: any) {
+        if (error?.cause?.body?.code === 10062) return
+        logCommand(interaction, 'Failure', `Check user admin history nb (Page ${page})`, LogLevels.Error, error)
+        const response = commonComponent({
+          color: 'red',
+          content: 'Something went wrong while fetching the history.',
+        })
+        await interaction.respond(response)
+      }
+    }
+
+    if (interaction.data?.customId?.startsWith('checkuseradminhistory-roles-')) {
+      const parts = interaction.data.customId.split('-')
+      const importIndex = Number(parts[2])
+      const cacheKey = parts[3]
+
+      try {
+        return await showUserHistoryRoles(interaction as Interaction, importIndex, cacheKey)
+      } catch (error: any) {
+        if (error?.cause?.body?.code === 10062) return
+        logCommand(interaction, 'Failure', 'Check user admin history roles', LogLevels.Error, error)
+        const response = commonComponent({ color: 'red', content: 'Something went wrong while fetching the roles.' })
+        await interaction.respond(response)
+      }
+    }
+
+    if (
+      interaction.data?.customId?.startsWith('checkuseradminhistory-') &&
+      !interaction.data.customId.startsWith('checkuseradminhistory-page-') &&
+      !interaction.data.customId.startsWith('checkuseradminhistory-roles-')
+    ) {
+      const parts = interaction.data.customId.split('-')
+      const direction = parts[1]
+      let page = Number(parts[2])
+      const cacheKey = parts[3]
+
+      if (direction === 'previous') {
+        page = Math.max(page - 1, 0)
+      } else if (direction === 'next') {
+        page = page + 1
+      } else if (direction === 'first') {
+        page = 0
+      }
+
+      try {
+        return await checkUserAdminHistoryMessage(interaction as Interaction, page, cacheKey, false)
+      } catch (error: any) {
+        if (error?.cause?.body?.code === 10062) return
+        logCommand(interaction, 'Failure', `Check user admin history (Page ${page})`, LogLevels.Error, error)
+        const response = commonComponent({
+          color: 'red',
+          content: 'Something went wrong while fetching the history.',
+        })
+        await interaction.respond(response)
+      }
+    }
+
+    if (interaction.data?.customId?.startsWith('checkuseradmin-roles-')) {
+      const parts = interaction.data.customId.split('-')
+      const importIndex = Number(parts[2])
+      const cacheKey = parts[3]
+
+      try {
+        return await showUserImportRoles(interaction as Interaction, importIndex, cacheKey)
+      } catch (error: any) {
+        if (error?.cause?.body?.code === 10062) return
+        logCommand(interaction, 'Failure', 'Check user admin roles', LogLevels.Error, error)
+        const response = commonComponent({ color: 'red', content: 'Something went wrong while fetching the roles.' })
+        await interaction.respond(response)
+      }
+    }
+
+    if (
+      interaction.data?.customId?.startsWith('checkuseradmin-') &&
+      !interaction.data.customId.startsWith('checkuseradmin-page-') &&
+      !interaction.data.customId.startsWith('checkuseradmin-roles-')
+    ) {
+      const parts = interaction.data.customId.split('-')
+      const direction = parts[1]
+      let page = Number(parts[2])
+      const cacheKey = parts[3]
+
+      if (direction === 'previous') {
+        page = Math.max(page - 1, 0)
+      } else if (direction === 'next') {
+        page = page + 1
+      } else if (direction === 'first') {
+        page = 0
+      }
+
+      try {
+        return await checkUserAdminMessage(interaction as Interaction, page, cacheKey, false)
+      } catch (error: any) {
+        if (error?.cause?.body?.code === 10062) return
+        logCommand(interaction, 'Failure', `Check user admin (Page ${page})`, LogLevels.Error, error)
+        const response = commonComponent({
+          color: 'red',
+          content: 'Something went wrong while fetching the check user admin results.',
         })
         await interaction.respond(response)
       }
