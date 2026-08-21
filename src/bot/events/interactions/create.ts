@@ -19,6 +19,7 @@ import {
   showUserHistoryRoles,
   showUserImportRoles,
 } from '../../commands/staff/checkUserAdmin.js'
+import { notesMessage } from '../../commands/staff/note.js'
 import { commonComponent } from '../../utils/components.js'
 
 const logCommand = (
@@ -320,6 +321,30 @@ bot.events.interactionCreate = async (interaction) => {
           color: 'red',
           content: 'Something went wrong while fetching the check user admin results.',
         })
+        await interaction.respond(response)
+      }
+    }
+
+    if (interaction.data?.customId?.startsWith('notes-')) {
+      const parts = interaction.data.customId.split('-')
+      const direction = parts[1]
+      let page = Number(parts[2])
+      const userId = parts[3]
+
+      if (direction === 'previous') {
+        page = Math.max(page - 1, 0)
+      } else if (direction === 'next') {
+        page = page + 1
+      } else if (direction === 'first') {
+        page = 0
+      }
+
+      try {
+        return await notesMessage(userId, interaction as Interaction, page, false)
+      } catch (error: any) {
+        if (error?.cause?.body?.code === 10062) return
+        logCommand(interaction, 'Failure', `Notes (Page ${page})`, LogLevels.Error, error)
+        const response = commonComponent({ color: 'red', content: 'Something went wrong while fetching the notes.' })
         await interaction.respond(response)
       }
     }

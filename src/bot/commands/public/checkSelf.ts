@@ -58,49 +58,51 @@ export const checkSelfMessage = async (userId: string, interaction: Interaction,
         type: MessageComponentTypes.Separator as const,
       },
       ...checkSelfComponents,
-      {
-        type: MessageComponentTypes.Separator as const,
-      },
-      {
-        type: MessageComponentTypes.ActionRow as const,
-        components: [
-          {
-            type: MessageComponentTypes.Button as const,
-            label: '❮',
-            customId: `checkself-previous-${String(page)}`,
-            style: 1,
-            disabled: imports.length > 0 ? page === 0 : true,
-          },
-          {
-            type: MessageComponentTypes.Button as const,
-            label: '❮❮',
-            customId: `checkself-first-${String(0)}`,
-            style: 2,
-            disabled: imports.length > 0 ? page === 0 : true,
-          },
-          {
-            type: MessageComponentTypes.Button as const,
-            label: `${page + 1} / ${imports.length > 0 ? totalPages : 1}`,
-            customId: `checkself-page-indicator`,
-            style: 2,
-            disabled: true,
-          },
-          {
-            type: MessageComponentTypes.Button as const,
-            label: '❯❯',
-            customId: `checkself-last-${String(totalPages - 1)}`,
-            style: 2,
-            disabled: imports.length > 0 ? page === totalPages - 1 : true,
-          },
-          {
-            type: MessageComponentTypes.Button as const,
-            label: '❯',
-            customId: `checkself-next-${String(page)}`,
-            style: 1,
-            disabled: imports.length > 0 ? !hasMore : true,
-          },
-        ],
-      },
+      ...(totalPages > 1
+        ? [
+            { type: MessageComponentTypes.Separator as const },
+            {
+              type: MessageComponentTypes.ActionRow as const,
+              components: [
+                {
+                  type: MessageComponentTypes.Button as const,
+                  label: '❮',
+                  customId: `checkself-previous-${String(page)}`,
+                  style: 1,
+                  disabled: page === 0,
+                },
+                {
+                  type: MessageComponentTypes.Button as const,
+                  label: '❮❮',
+                  customId: `checkself-first-${String(0)}`,
+                  style: 2,
+                  disabled: page === 0,
+                },
+                {
+                  type: MessageComponentTypes.Button as const,
+                  label: `${page + 1} / ${totalPages}`,
+                  customId: `checkself-page-indicator`,
+                  style: 2,
+                  disabled: true,
+                },
+                {
+                  type: MessageComponentTypes.Button as const,
+                  label: '❯❯',
+                  customId: `checkself-last-${String(totalPages - 1)}`,
+                  style: 2,
+                  disabled: page === totalPages - 1,
+                },
+                {
+                  type: MessageComponentTypes.Button as const,
+                  label: '❯',
+                  customId: `checkself-next-${String(page)}`,
+                  style: 1,
+                  disabled: !hasMore,
+                },
+              ],
+            },
+          ]
+        : []),
       {
         type: MessageComponentTypes.Separator as const,
       },

@@ -1,11 +1,12 @@
-import { and, count, eq, getTableColumns, inArray, sql } from 'drizzle-orm'
+import { and, count, eq, getColumns, inArray, sql } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/node-postgres'
 import { bot } from '../bot/bot.js'
-import { badservers, imports, users } from './schema.js'
+import { badservers, imports, notes, users } from './schema.js'
 
 export type BadServer = typeof badservers.$inferSelect
 export type User = typeof users.$inferSelect
 export type Import = typeof imports.$inferSelect
+export type Note = typeof notes.$inferSelect
 
 const db = drizzle(process.env.DATABASE_URL || '')
 
@@ -163,7 +164,7 @@ const getServerRoleImportsById = async (
 const getServersByImportId = async (id: string): Promise<BadServer[]> => {
   try {
     const result = await db
-      .select(getTableColumns(badservers))
+      .select(getColumns(badservers))
       .from(imports)
       .leftJoin(badservers, eq(badservers.id, imports.server))
       .where(and(eq(imports.id, id), eq(imports.appealed, false)))
@@ -177,7 +178,7 @@ const getServersByImportId = async (id: string): Promise<BadServer[]> => {
 const getImportsWithServerByUserId = async (id: string): Promise<(Import & { server: BadServer | null })[]> => {
   try {
     const result = await db
-      .select({ ...getTableColumns(imports), server: badservers })
+      .select({ ...getColumns(imports), server: badservers })
       .from(imports)
       .leftJoin(badservers, eq(badservers.id, imports.server))
       .where(and(eq(imports.id, id), eq(imports.appealed, false)))
@@ -193,7 +194,7 @@ const getImportsWithServerByUserId = async (id: string): Promise<(Import & { ser
 const getImportHistoryWithServerByUserId = async (id: string): Promise<(Import & { server: BadServer | null })[]> => {
   try {
     const result = await db
-      .select({ ...getTableColumns(imports), server: badservers })
+      .select({ ...getColumns(imports), server: badservers })
       .from(imports)
       .leftJoin(badservers, eq(badservers.id, imports.server))
       .where(and(eq(imports.id, id), eq(imports.appealed, true)))
@@ -206,9 +207,46 @@ const getImportHistoryWithServerByUserId = async (id: string): Promise<(Import &
   }
 }
 
+// Note functions
+const getNotesByUserId = async (id: string): Promise<Note[]> => {
+  try {
+    return await db.select().from(notes).where(eq(notes.id, id))
+  } catch (err) {
+    bot.logger.error(`Error fetching notes for user ID ${id}:`, err)
+    return []
+  }
+}
+
+const addNote = async (noteData: Omit<typeof notes.$inferInsert, 'createdat'>): Promise<Note | null> => {
+  try {
+    const now = new Date()
+    const result = await db
+      .insert(notes)
+      .values({ ...noteData, createdat: now })
+      .returning()
+    bot.logger.info(`Note for user ID ${noteData.id} added successfully`)
+    return result[0] ?? null
+  } catch (err) {
+    bot.logger.error(`Error adding note for user ID ${noteData.id}:`, err)
+    return null
+  }
+}
+
+const removeNote = async (noteId: number): Promise<boolean> => {
+  try {
+    const result = await db.delete(notes).where(eq(notes.nid, noteId)).returning({ nid: notes.nid })
+    if (result.length > 0) bot.logger.info(`Note with ID ${noteId} removed successfully`)
+    return result.length > 0
+  } catch (err) {
+    bot.logger.error(`Error removing note with ID ${noteId}:`, err)
+    return false
+  }
+}
+
 export {
   addBadServer,
   addImport,
+  addNote,
   addUser,
   checkConnection,
   db,
@@ -216,6 +254,7 @@ export {
   getBadServerById,
   getImportHistoryWithServerByUserId,
   getImportsWithServerByUserId,
+  getNotesByUserId,
   getServerRoleImportsById,
   getServersByImportId,
   getTotalBadServers,
@@ -224,4 +263,5 @@ export {
   getUserImportsById,
   getUserImportsCountById,
   getUserImportsTypesById,
+  removeNote,
 }
