@@ -11,16 +11,18 @@ import {
 import { addImport, addUser, getUserById, type User } from '../../../db/index.js'
 import { bot } from '../../bot.js'
 import createCommand from '../../commands.js'
-import { get, set } from '../../redis/redis.js'
+import { get, set, ttl } from '../../redis/redis.js'
 import { componentColors } from '../../utils/colors.js'
 import { commonComponent } from '../../utils/components.js'
 import { checkIfValidServerId } from '../../utils/server.js'
 import { checkIfValidUserId, mapUserStatus, mapUserTypes } from '../../utils/user.js'
 
-const ADDUSER_BULK_PER_PAGE = 10
-
 export const ADDUSER_BULK_CACHE_PREFIX = 'adduserbulk:'
-export const ADDUSER_BULK_CACHE_TTL = 300
+export const ADDUSER_BULK_CACHE_TTL = 300 // 5 minutes
+
+const ADDUSER_BULK_PER_PAGE = 10
+const ADDUSER_BULK_CACHE_TTL_WARN = 30 // disable buttons when ≤30s remain
+const addUserBulkPage = new Map<string, number>()
 
 export interface AddUserBulkResult {
   added: string[]
@@ -47,6 +49,9 @@ export const addUserBulkMessage = async (
     else await interaction.edit(response)
     return
   }
+
+  const remaining = await ttl(`${ADDUSER_BULK_CACHE_PREFIX}${cacheKey}`)
+  const isExpiring = remaining >= 0 && remaining <= ADDUSER_BULK_CACHE_TTL_WARN
 
   const { added, alreadyExists, failed, type, status, reason } = JSON.parse(cached) as AddUserBulkResult
   const totalPages = Math.max(1, Math.ceil(added.length / ADDUSER_BULK_PER_PAGE))
@@ -102,14 +107,14 @@ export const addUserBulkMessage = async (
           label: '❮',
           customId: `adduserbulk-previous-${page}-${cacheKey}`,
           style: 1,
-          disabled: page === 0,
+          disabled: page === 0 || isExpiring,
         },
         {
           type: MessageComponentTypes.Button as const,
           label: '❮❮',
           customId: `adduserbulk-first-0-${cacheKey}`,
           style: 2,
-          disabled: page === 0,
+          disabled: page === 0 || isExpiring,
         },
         {
           type: MessageComponentTypes.Button as const,
@@ -123,14 +128,14 @@ export const addUserBulkMessage = async (
           label: '❯❯',
           customId: `adduserbulk-last-${totalPages - 1}-${cacheKey}`,
           style: 2,
-          disabled: isLastPage,
+          disabled: isLastPage || isExpiring,
         },
         {
           type: MessageComponentTypes.Button as const,
           label: '❯',
           customId: `adduserbulk-next-${page}-${cacheKey}`,
           style: 1,
-          disabled: isLastPage,
+          disabled: isLastPage || isExpiring,
         },
       ],
     })
@@ -147,8 +152,21 @@ export const addUserBulkMessage = async (
     ],
   }
 
-  if (newMessage) await interaction.respond(response)
-  else await interaction.edit(response)
+  addUserBulkPage.set(cacheKey, page)
+
+  if (newMessage) {
+    await interaction.respond(response)
+    // Proactively disable all buttons before the cache expires
+    setTimeout(
+      () => {
+        addUserBulkMessage(interaction, addUserBulkPage.get(cacheKey) ?? page, cacheKey, false).catch(() => {})
+        addUserBulkPage.delete(cacheKey)
+      },
+      (ADDUSER_BULK_CACHE_TTL - ADDUSER_BULK_CACHE_TTL_WARN) * 1000,
+    )
+  } else {
+    await interaction.edit(response)
+  }
 }
 
 createCommand({

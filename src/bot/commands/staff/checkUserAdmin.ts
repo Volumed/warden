@@ -24,12 +24,11 @@ import { commonComponent } from '../../utils/components.js'
 import { serverTypeMap } from '../../utils/server.js'
 import { checkIfValidUserId, mapUserStatus, mapUserTypes } from '../../utils/user.js'
 
-const MAX_BULK_PER_PAGE = 5
-
 export const CHECK_USER_ADMIN_CACHE_PREFIX = 'checkuseradmin:'
 export const CHECK_USER_ADMIN_CACHE_TTL = 300 // 5 minutes
-const CHECK_USER_ADMIN_CACHE_TTL_WARN = 30 // disable buttons when ≤30s remain
 
+const MAX_BULK_PER_PAGE = 5
+const CHECK_USER_ADMIN_CACHE_TTL_WARN = 30 // disable buttons when ≤30s remain
 const sessionState = new Map<string, { page: number; view: 'main' | 'history' }>()
 
 const pushImportEntries = (
@@ -52,7 +51,8 @@ const pushImportEntries = (
     containerComponents.push({
       type: MessageComponentTypes.TextDisplay as const,
       content: [
-        `**${imported.server?.name ?? 'Unknown'}** (${imported.server?.id ?? 'Unknown'}) \`\`${serverTypeMap({ type: imported.server?.type ?? null }).label}\`\``,
+        `**${imported.server?.name ?? 'Unknown'}**`,
+        `-# ID: ${imported.server?.id ?? 'Unknown'} · Type: ${serverTypeMap({ type: imported.server?.type ?? null }).label}`,
         `> **Type**: \`\`${mapUserTypes([imported.type])[0].label}\`\``,
         importRoles.length > 10
           ? '> **Roles**: *Too many to display — click the button below*'

@@ -23,12 +23,11 @@ import {
 } from '../../utils/server.js'
 import { GUILD_INVITE_CACHE_PREFIX, GUILD_INVITE_CACHE_TTL } from '../public/checkServer.js'
 
-const MAX_BULK_PER_PAGE = 5
-
 export const BULK_CHECK_SERVERS_CACHE_PREFIX = 'bulkcheckservers:'
 export const BULK_CHECK_SERVERS_CACHE_TTL = 300 // 5 minutes
-const BULK_CHECK_SERVERS_CACHE_TTL_WARN = 30 // disable buttons when ≤30s remain
 
+const MAX_BULK_PER_PAGE = 5
+const BULK_CHECK_SERVERS_CACHE_TTL_WARN = 30 // disable buttons when ≤30s remain
 const bulkCheckServersPage = new Map<string, number>()
 
 export interface BulkCheckServersResult {

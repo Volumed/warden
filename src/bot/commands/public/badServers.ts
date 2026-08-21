@@ -8,8 +8,10 @@ import { componentColors } from '../../utils/colors.js'
 import { commonComponent } from '../../utils/components.js'
 import { serverTypeMap } from '../../utils/server.js'
 
+export const BAD_SERVERS_CACHE_KEY = 'badservers:list'
+export const BAD_SERVERS_CACHE_TTL = 1200 // 20 minutes
+
 const MAX_SERVERS_PER_PAGE = 10
-const BAD_SERVERS_CACHE_KEY = 'badservers:list'
 
 const pager = async (page: number): Promise<{ servers: BadServer[]; hasMore: boolean; totalPages: number }> => {
   const cached = await get(BAD_SERVERS_CACHE_KEY)
@@ -19,7 +21,7 @@ const pager = async (page: number): Promise<{ servers: BadServer[]; hasMore: boo
   } else {
     const resultFetch = await getAllBadServers()
     result = resultFetch.sort((a, b) => b.createdat.getTime() - a.createdat.getTime())
-    await set(BAD_SERVERS_CACHE_KEY, JSON.stringify(result), 1200)
+    await set(BAD_SERVERS_CACHE_KEY, JSON.stringify(result), BAD_SERVERS_CACHE_TTL)
   }
 
   const startIndex = page * MAX_SERVERS_PER_PAGE
