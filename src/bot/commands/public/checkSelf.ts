@@ -2,9 +2,13 @@ import { type Interaction, MessageComponentTypes, MessageFlags } from '@discorde
 import { type BadServer, getServersByImportId, getUserById, type User } from '../../../db/index.js'
 import { bot } from '../../bot.js'
 import createCommand from '../../commands.js'
+import { get, set } from '../../redis/redis.js'
 import { componentColors } from '../../utils/colors.js'
 import { commonComponent } from '../../utils/components.js'
 import { serverTypeMap } from '../../utils/server.js'
+
+export const CHECK_SELF_CACHE_KEY = 'checkself:list'
+export const CHECK_SELF_CACHE_TTL = 300 // 5 minutes
 
 const MAX_SERVERS_PER_PAGE = 6
 
@@ -12,10 +16,20 @@ const pager = async (
   userId: string,
   page: number,
 ): Promise<{ imports: BadServer[]; hasMore: boolean; totalPages: number }> => {
-  const resultFetch = await getServersByImportId(userId)
-  const result = resultFetch.sort((a, b) => b.createdat.getTime() - a.createdat.getTime())
+  const cached = await get(`${CHECK_SELF_CACHE_KEY}:${userId}`)
+  let result: BadServer[]
+
+  if (cached) {
+    result = JSON.parse(cached) as BadServer[]
+  } else {
+    const resultFetch = await getServersByImportId(userId)
+    result = resultFetch.sort((a, b) => b.createdat.getTime() - a.createdat.getTime())
+    await set(`${CHECK_SELF_CACHE_KEY}:${userId}`, JSON.stringify(result), CHECK_SELF_CACHE_TTL)
+  }
+
   const startIndex = page * MAX_SERVERS_PER_PAGE
   const endIndex = startIndex + MAX_SERVERS_PER_PAGE
+
   return {
     imports: result.slice(startIndex, endIndex),
     hasMore: result.length > endIndex,
@@ -34,7 +48,8 @@ export const checkSelfMessage = async (userId: string, interaction: Interaction,
               type: MessageComponentTypes.TextDisplay as const,
               content: [
                 `**${s.name}**`,
-                `-# ID: ${s.id} · Type: ${serverTypeMap({ type: s.type }).label}\nDate Added: <t:${Math.floor(new Date(s.createdat).getTime() / 1000)}:f>`,
+                `> -# ID: ${s.id} · Type: ${serverTypeMap({ type: s.type }).label}`,
+                `> -# Date Added: <t:${Math.floor(new Date(s.createdat).getTime() / 1000)}:f>`,
               ].join('\n'),
             },
             ...(i < imports.length - 1 ? [{ type: MessageComponentTypes.Separator as const }] : []),

@@ -16,6 +16,7 @@ const MAX_SERVERS_PER_PAGE = 10
 const pager = async (page: number): Promise<{ servers: BadServer[]; hasMore: boolean; totalPages: number }> => {
   const cached = await get(BAD_SERVERS_CACHE_KEY)
   let result: BadServer[]
+
   if (cached) {
     result = JSON.parse(cached) as BadServer[]
   } else {
@@ -26,6 +27,7 @@ const pager = async (page: number): Promise<{ servers: BadServer[]; hasMore: boo
 
   const startIndex = page * MAX_SERVERS_PER_PAGE
   const endIndex = startIndex + MAX_SERVERS_PER_PAGE
+
   return {
     servers: result.slice(startIndex, endIndex),
     hasMore: result.length > endIndex,
@@ -44,7 +46,8 @@ export const badServersMessage = async (interaction: Interaction, page: number, 
               type: MessageComponentTypes.TextDisplay as const,
               content: [
                 `**${s.name}**`,
-                `-# ID: ${s.id} · Type: ${serverTypeMap({ type: s.type }).label}\nDate Added: <t:${Math.floor(new Date(s.createdat).getTime() / 1000)}:f>`,
+                `> -# ID: ${s.id} · Type: ${serverTypeMap({ type: s.type }).label}`,
+                `> -# Date Added: <t:${Math.floor(new Date(s.createdat).getTime() / 1000)}:f>`,
               ].join('\n'),
             },
             ...(i < servers.length - 1 ? [{ type: MessageComponentTypes.Separator as const }] : []),
