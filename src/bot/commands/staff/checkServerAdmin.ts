@@ -23,20 +23,20 @@ import {
 } from '../../utils/server.js'
 import { GUILD_INVITE_CACHE_PREFIX, GUILD_INVITE_CACHE_TTL } from '../public/checkServer.js'
 
-export const BULK_CHECK_SERVERS_CACHE_PREFIX = 'bulkcheckservers:'
+export const BULK_CHECK_SERVERS_CACHE_PREFIX = 'multicheckservers:'
 export const BULK_CHECK_SERVERS_CACHE_TTL = 300 // 5 minutes
 
 const MAX_BULK_PER_PAGE = 5
 const BULK_CHECK_SERVERS_CACHE_TTL_WARN = 30 // disable buttons when ≤30s remain
-const bulkCheckServersPage = new Map<string, number>()
+const multiCheckServersPage = new Map<string, number>()
 
-export interface BulkCheckServersResult {
+export interface MultiCheckServersResult {
   found: Array<{ badServer: BadServer; guildId: string }>
   notFound: Array<{ guildId: string }>
   failedInvites: string[]
 }
 
-export const bulkCheckServersMessage = async (
+export const multiCheckServersMessage = async (
   interaction: Interaction,
   page: number,
   cacheKey: string,
@@ -46,7 +46,7 @@ export const bulkCheckServersMessage = async (
   if (!cached) {
     const response = commonComponent({
       color: 'orange',
-      content: 'This bulk check session has expired. Please run the command again.',
+      content: 'This multi check session has expired. Please run the command again.',
     })
     if (newMessage) await interaction.respond(response)
     else await interaction.edit(response)
@@ -56,7 +56,7 @@ export const bulkCheckServersMessage = async (
   const remaining = await ttl(`${BULK_CHECK_SERVERS_CACHE_PREFIX}${cacheKey}`)
   const isExpiring = remaining >= 0 && remaining <= BULK_CHECK_SERVERS_CACHE_TTL_WARN
 
-  const { found, notFound, failedInvites } = JSON.parse(cached) as BulkCheckServersResult
+  const { found, notFound, failedInvites } = JSON.parse(cached) as MultiCheckServersResult
   const totalPages = Math.max(1, Math.ceil(found.length / MAX_BULK_PER_PAGE))
   const isLastPage = page >= totalPages - 1
   const pageServers = found.slice(page * MAX_BULK_PER_PAGE, (page + 1) * MAX_BULK_PER_PAGE)
@@ -65,7 +65,7 @@ export const bulkCheckServersMessage = async (
 
   containerComponents.push({
     type: MessageComponentTypes.TextDisplay as const,
-    content: `### Bulk check — ${found.length} blacklisted, ${notFound.length} not found${failedInvites.length > 0 ? `, ${failedInvites.length} invite(s) failed` : ''}`,
+    content: `### Multi check — ${found.length} blacklisted, ${notFound.length} not found${failedInvites.length > 0 ? `, ${failedInvites.length} invite(s) failed` : ''}`,
   })
 
   if (pageServers.length > 0) {
@@ -80,7 +80,7 @@ export const bulkCheckServersMessage = async (
           `> **Type:** ${serverType?.label ?? 'Unknown'}`,
           `> **Reason:** ${badServer.reason}`,
           badServer.invite ? `> **Invite:** https://discord.gg/${getInviteCode({ invite: badServer.invite })}` : null,
-          `-# Added: <t:${addedAt}:f>`,
+          `-# Added by <@${badServer.addedby}> on <t:${addedAt}:f>`,
         ]
           .filter(Boolean)
           .join('\n'),
@@ -113,35 +113,35 @@ export const bulkCheckServersMessage = async (
         {
           type: MessageComponentTypes.Button as const,
           label: '❮',
-          customId: `bulkcheckservers-previous-${page}-${cacheKey}`,
+          customId: `multicheckservers-previous-${page}-${cacheKey}`,
           style: 1,
           disabled: page === 0 || isExpiring,
         },
         {
           type: MessageComponentTypes.Button as const,
           label: '❮❮',
-          customId: `bulkcheckservers-first-0-${cacheKey}`,
+          customId: `multicheckservers-first-0-${cacheKey}`,
           style: 2,
           disabled: page === 0 || isExpiring,
         },
         {
           type: MessageComponentTypes.Button as const,
           label: `${page + 1} / ${totalPages}`,
-          customId: 'bulkcheckservers-page-indicator',
+          customId: 'multicheckservers-page-indicator',
           style: 2,
           disabled: true,
         },
         {
           type: MessageComponentTypes.Button as const,
           label: '❯❯',
-          customId: `bulkcheckservers-last-${totalPages - 1}-${cacheKey}`,
+          customId: `multicheckservers-last-${totalPages - 1}-${cacheKey}`,
           style: 2,
           disabled: isLastPage || isExpiring,
         },
         {
           type: MessageComponentTypes.Button as const,
           label: '❯',
-          customId: `bulkcheckservers-next-${page}-${cacheKey}`,
+          customId: `multicheckservers-next-${page}-${cacheKey}`,
           style: 1,
           disabled: isLastPage || isExpiring,
         },
@@ -160,17 +160,17 @@ export const bulkCheckServersMessage = async (
     ],
   }
 
-  bulkCheckServersPage.set(cacheKey, page)
+  multiCheckServersPage.set(cacheKey, page)
 
   if (newMessage) {
     await interaction.respond(response)
     // Proactively disable all buttons before the cache expires
     setTimeout(
       () => {
-        bulkCheckServersMessage(interaction, bulkCheckServersPage.get(cacheKey) ?? page, cacheKey, false).catch(
+        multiCheckServersMessage(interaction, multiCheckServersPage.get(cacheKey) ?? page, cacheKey, false).catch(
           () => {},
         )
-        bulkCheckServersPage.delete(cacheKey)
+        multiCheckServersPage.delete(cacheKey)
       },
       (BULK_CHECK_SERVERS_CACHE_TTL - BULK_CHECK_SERVERS_CACHE_TTL_WARN) * 1000,
     )
@@ -182,7 +182,7 @@ export const bulkCheckServersMessage = async (
 const checkServerAdminRun: Parameters<typeof createCommand>[0]['run'] = async (interaction, options) => {
   const typedOptions = options as {
     check?: { server_id?: string; invite?: string }
-    bulk?: { server_ids?: string; invites?: string }
+    multi?: { server_ids?: string; invites?: string }
   }
 
   if (typedOptions.check !== undefined) {
@@ -318,17 +318,10 @@ const checkServerAdminRun: Parameters<typeof createCommand>[0]['run'] = async (i
                 badServer.invite
                   ? `> **Invite:** https://discord.gg/${getInviteCode({ invite: badServer.invite })}`
                   : null,
+                `-# Added by <@${badServer.addedby}> on <t:${addedAt}:f>`,
               ]
                 .filter(Boolean)
                 .join('\n'),
-            },
-            {
-              type: MessageComponentTypes.Separator as const,
-              divider: true,
-            },
-            {
-              type: MessageComponentTypes.TextDisplay as const,
-              content: `-# Date Added: <t:${addedAt}:f>`,
             },
           ],
         },
@@ -339,8 +332,8 @@ const checkServerAdminRun: Parameters<typeof createCommand>[0]['run'] = async (i
     return
   }
 
-  if (typedOptions.bulk !== undefined) {
-    const { server_ids: serverIdsRaw, invites: invitesRaw } = typedOptions.bulk
+  if (typedOptions.multi !== undefined) {
+    const { server_ids: serverIdsRaw, invites: invitesRaw } = typedOptions.multi
 
     if (!serverIdsRaw && !invitesRaw) {
       const response = commonComponent({
@@ -452,7 +445,7 @@ const checkServerAdminRun: Parameters<typeof createCommand>[0]['run'] = async (i
           notFound.push({ guildId: result.value.guildId })
         }
       } else {
-        bot.logger.error('Error fetching server record in bulk check:', result.reason)
+        bot.logger.error('Error fetching server record in multi check:', result.reason)
       }
     }
 
@@ -463,7 +456,7 @@ const checkServerAdminRun: Parameters<typeof createCommand>[0]['run'] = async (i
       JSON.stringify({ found, notFound, failedInvites }),
       BULK_CHECK_SERVERS_CACHE_TTL,
     )
-    await bulkCheckServersMessage(interaction as Interaction, 0, cacheKey, true)
+    await multiCheckServersMessage(interaction as Interaction, 0, cacheKey, true)
   }
 }
 
@@ -489,7 +482,7 @@ const checkServerAdminCommandOptions = {
       ],
     },
     {
-      name: 'bulk',
+      name: 'multi',
       description: 'Check multiple servers at once via comma-separated IDs or invites.',
       type: ApplicationCommandOptionTypes.SubCommand,
       options: [

@@ -10,12 +10,12 @@ import chalk from 'chalk'
 import { bot } from '../../bot.js'
 import { badServersMessage } from '../../commands/public/badServers.js'
 import { checkSelfMessage } from '../../commands/public/checkSelf.js'
-import { addUserBulkMessage } from '../../commands/staff/addUser.js'
-import { bulkCheckServersMessage } from '../../commands/staff/checkServerAdmin.js'
+import { addUserMultiMessage } from '../../commands/staff/addUser.js'
+import { multiCheckServersMessage } from '../../commands/staff/checkServerAdmin.js'
 import {
-  bulkCheckUsersMessage,
   checkUserAdminHistoryMessage,
   checkUserAdminMessage,
+  multiCheckUsersMessage,
   showUserHistoryRoles,
   showUserImportRoles,
 } from '../../commands/staff/checkUserAdmin.js'
@@ -101,8 +101,8 @@ bot.events.interactionCreate = async (interaction) => {
     }
 
     if (
-      interaction.data?.customId?.startsWith('bulkcheckservers-') &&
-      !interaction.data.customId.startsWith('bulkcheckservers-page-')
+      interaction.data?.customId?.startsWith('multicheckservers-') &&
+      !interaction.data.customId.startsWith('multicheckservers-page-')
     ) {
       const parts = interaction.data.customId.split('-')
       const direction = parts[1]
@@ -118,21 +118,21 @@ bot.events.interactionCreate = async (interaction) => {
       }
 
       try {
-        return await bulkCheckServersMessage(interaction as Interaction, page, cacheKey, false)
+        return await multiCheckServersMessage(interaction as Interaction, page, cacheKey, false)
       } catch (error: any) {
         if (error?.cause?.body?.code === 10062) return
-        logCommand(interaction, 'Failure', `Bulk check (Page ${page})`, LogLevels.Error, error)
+        logCommand(interaction, 'Failure', `Multi check (Page ${page})`, LogLevels.Error, error)
         const response = commonComponent({
           color: 'red',
-          content: 'Something went wrong while fetching the bulk check results.',
+          content: 'Something went wrong while fetching the multi check results.',
         })
         await interaction.respond(response)
       }
     }
 
     if (
-      interaction.data?.customId?.startsWith('adduserbulk-') &&
-      !interaction.data.customId.startsWith('adduserbulk-page-')
+      interaction.data?.customId?.startsWith('addusermulti-') &&
+      !interaction.data.customId.startsWith('addusermulti-page-')
     ) {
       const parts = interaction.data.customId.split('-')
       const direction = parts[1]
@@ -148,21 +148,21 @@ bot.events.interactionCreate = async (interaction) => {
       }
 
       try {
-        return await addUserBulkMessage(interaction as Interaction, page, cacheKey, false)
+        return await addUserMultiMessage(interaction as Interaction, page, cacheKey, false)
       } catch (error: any) {
         if (error?.cause?.body?.code === 10062) return
-        logCommand(interaction, 'Failure', `Add user bulk (Page ${page})`, LogLevels.Error, error)
+        logCommand(interaction, 'Failure', `Add user multi (Page ${page})`, LogLevels.Error, error)
         const response = commonComponent({
           color: 'red',
-          content: 'Something went wrong while fetching the bulk add results.',
+          content: 'Something went wrong while fetching the multi add results.',
         })
         await interaction.respond(response)
       }
     }
 
     if (
-      interaction.data?.customId?.startsWith('bulkcheckuseradmin-') &&
-      !interaction.data.customId.startsWith('bulkcheckuseradmin-page-')
+      interaction.data?.customId?.startsWith('multicheckuseradmin-') &&
+      !interaction.data.customId.startsWith('multicheckuseradmin-page-')
     ) {
       const parts = interaction.data.customId.split('-')
       const direction = parts[1]
@@ -178,10 +178,10 @@ bot.events.interactionCreate = async (interaction) => {
       }
 
       try {
-        return await bulkCheckUsersMessage(interaction as Interaction, page, cacheKey, false)
+        return await multiCheckUsersMessage(interaction as Interaction, page, cacheKey, false)
       } catch (error: any) {
         if (error?.cause?.body?.code === 10062) return
-        logCommand(interaction, 'Failure', `Bulk check users (Page ${page})`, LogLevels.Error, error)
+        logCommand(interaction, 'Failure', `Multi check users (Page ${page})`, LogLevels.Error, error)
         const response = commonComponent({ color: 'red', content: 'Something went wrong while fetching the results.' })
         await interaction.respond(response)
       }

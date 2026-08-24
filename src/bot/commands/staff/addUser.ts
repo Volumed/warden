@@ -17,14 +17,14 @@ import { commonComponent } from '../../utils/components.js'
 import { checkIfValidServerId } from '../../utils/server.js'
 import { checkIfValidUserId, mapUserStatus, mapUserTypes } from '../../utils/user.js'
 
-export const ADDUSER_BULK_CACHE_PREFIX = 'adduserbulk:'
+export const ADDUSER_BULK_CACHE_PREFIX = 'addusermulti:'
 export const ADDUSER_BULK_CACHE_TTL = 300 // 5 minutes
 
 const ADDUSER_BULK_PER_PAGE = 10
 const ADDUSER_BULK_CACHE_TTL_WARN = 30 // disable buttons when ≤30s remain
-const addUserBulkPage = new Map<string, number>()
+const addUserMultiPage = new Map<string, number>()
 
-export interface AddUserBulkResult {
+export interface AddUserMultiResult {
   added: string[]
   alreadyExists: string[]
   failed: string[]
@@ -33,7 +33,7 @@ export interface AddUserBulkResult {
   reason: string
 }
 
-export const addUserBulkMessage = async (
+export const addUserMultiMessage = async (
   interaction: Interaction,
   page: number,
   cacheKey: string,
@@ -43,7 +43,7 @@ export const addUserBulkMessage = async (
   if (!cached) {
     const response = commonComponent({
       color: 'orange',
-      content: 'This bulk add session has expired. Please run the command again.',
+      content: 'This multi add session has expired. Please run the command again.',
     })
     if (newMessage) await interaction.respond(response)
     else await interaction.edit(response)
@@ -53,7 +53,7 @@ export const addUserBulkMessage = async (
   const remaining = await ttl(`${ADDUSER_BULK_CACHE_PREFIX}${cacheKey}`)
   const isExpiring = remaining >= 0 && remaining <= ADDUSER_BULK_CACHE_TTL_WARN
 
-  const { added, alreadyExists, failed, type, status, reason } = JSON.parse(cached) as AddUserBulkResult
+  const { added, alreadyExists, failed, type, status, reason } = JSON.parse(cached) as AddUserMultiResult
   const totalPages = Math.max(1, Math.ceil(added.length / ADDUSER_BULK_PER_PAGE))
   const isLastPage = page >= totalPages - 1
   const pageUsers = added.slice(page * ADDUSER_BULK_PER_PAGE, (page + 1) * ADDUSER_BULK_PER_PAGE)
@@ -63,7 +63,7 @@ export const addUserBulkMessage = async (
   containerComponents.push({
     type: MessageComponentTypes.TextDisplay as const,
     content: [
-      `### Bulk add — ${added.length} added, ${alreadyExists.length} already existed${failed.length > 0 ? `, ${failed.length} failed` : ''}`,
+      `### Multi add — ${added.length} added, ${alreadyExists.length} already existed${failed.length > 0 ? `, ${failed.length} failed` : ''}`,
       `> **Type:** ${mapUserTypes([type])[0].label}  ·  **Status:** ${mapUserStatus(status)}  ·  **Reason:** ${reason}`,
     ]
       .filter(Boolean)
@@ -105,35 +105,35 @@ export const addUserBulkMessage = async (
         {
           type: MessageComponentTypes.Button as const,
           label: '❮',
-          customId: `adduserbulk-previous-${page}-${cacheKey}`,
+          customId: `addusermulti-previous-${page}-${cacheKey}`,
           style: 1,
           disabled: page === 0 || isExpiring,
         },
         {
           type: MessageComponentTypes.Button as const,
           label: '❮❮',
-          customId: `adduserbulk-first-0-${cacheKey}`,
+          customId: `addusermulti-first-0-${cacheKey}`,
           style: 2,
           disabled: page === 0 || isExpiring,
         },
         {
           type: MessageComponentTypes.Button as const,
           label: `${page + 1} / ${totalPages}`,
-          customId: 'adduserbulk-page-indicator',
+          customId: 'addusermulti-page-indicator',
           style: 2,
           disabled: true,
         },
         {
           type: MessageComponentTypes.Button as const,
           label: '❯❯',
-          customId: `adduserbulk-last-${totalPages - 1}-${cacheKey}`,
+          customId: `addusermulti-last-${totalPages - 1}-${cacheKey}`,
           style: 2,
           disabled: isLastPage || isExpiring,
         },
         {
           type: MessageComponentTypes.Button as const,
           label: '❯',
-          customId: `adduserbulk-next-${page}-${cacheKey}`,
+          customId: `addusermulti-next-${page}-${cacheKey}`,
           style: 1,
           disabled: isLastPage || isExpiring,
         },
@@ -152,15 +152,15 @@ export const addUserBulkMessage = async (
     ],
   }
 
-  addUserBulkPage.set(cacheKey, page)
+  addUserMultiPage.set(cacheKey, page)
 
   if (newMessage) {
     await interaction.respond(response)
     // Proactively disable all buttons before the cache expires
     setTimeout(
       () => {
-        addUserBulkMessage(interaction, addUserBulkPage.get(cacheKey) ?? page, cacheKey, false).catch(() => {})
-        addUserBulkPage.delete(cacheKey)
+        addUserMultiMessage(interaction, addUserMultiPage.get(cacheKey) ?? page, cacheKey, false).catch(() => {})
+        addUserMultiPage.delete(cacheKey)
       },
       (ADDUSER_BULK_CACHE_TTL - ADDUSER_BULK_CACHE_TTL_WARN) * 1000,
     )
@@ -226,7 +226,7 @@ createCommand({
       ],
     },
     {
-      name: 'bulk',
+      name: 'multi',
       description: 'Add multiple users at once with the same server, type, status, and reason.',
       type: ApplicationCommandOptionTypes.SubCommand,
       options: [
@@ -285,7 +285,7 @@ createCommand({
         status?: User['status']
         reason?: string
       }
-      bulk?: {
+      multi?: {
         user_ids?: string
         server_id?: string
         type?: User['type']
@@ -405,14 +405,14 @@ createCommand({
       return
     }
 
-    if (typedOptions.bulk !== undefined) {
+    if (typedOptions.multi !== undefined) {
       const {
         user_ids: userIdsRaw,
         server_id: serverIdOption,
         type: typeOption,
         status: statusOption,
         reason: reasonOption,
-      } = typedOptions.bulk
+      } = typedOptions.multi
 
       if (!userIdsRaw || !serverIdOption || !typeOption || !statusOption) {
         const response = commonComponent({
@@ -490,7 +490,7 @@ createCommand({
           if (result.value.outcome === 'alreadyExists') alreadyExists.push(result.value.userId)
           else added.push(result.value.userId)
         } else {
-          bot.logger.error(`Error processing user ${userIds[i]} in bulk add:`, result.reason)
+          bot.logger.error(`Error processing user ${userIds[i]} in multi add:`, result.reason)
           failed.push(userIds[i])
         }
       }
@@ -508,7 +508,7 @@ createCommand({
         }),
         ADDUSER_BULK_CACHE_TTL,
       )
-      await addUserBulkMessage(interaction as Interaction, 0, cacheKey, true)
+      await addUserMultiMessage(interaction as Interaction, 0, cacheKey, true)
     }
   },
 })

@@ -28,7 +28,7 @@ import { checkIfValidUserId, mapUserStatus, mapUserTypes } from '../../utils/use
 
 export const CHECK_USER_ADMIN_CACHE_PREFIX = 'checkuseradmin:'
 export const CHECK_USER_ADMIN_CACHE_TTL = 300 // 5 minutes
-export const BULK_CHECK_USERS_CACHE_PREFIX = 'bulkcheckuseradmin:'
+export const BULK_CHECK_USERS_CACHE_PREFIX = 'multicheckuseradmin:'
 export const BULK_CHECK_USERS_CACHE_TTL = 300 // 5 minutes
 
 const MAX_SERVERS_PER_PAGE = 5
@@ -37,9 +37,9 @@ const sessionState = new Map<string, { page: number; view: 'main' | 'history' }>
 
 const MAX_BULK_USERS_PER_PAGE = 6
 const BULK_CHECK_USERS_CACHE_TTL_WARN = 30
-const bulkCheckUsersPage = new Map<string, number>()
+const multiCheckUsersPage = new Map<string, number>()
 
-export interface BulkCheckUsersResult {
+export interface MultiCheckUsersResult {
   results: Array<{ userId: string; user: User | null; importCount: number; importTypes: Import['type'][] }>
 }
 
@@ -433,7 +433,7 @@ export const showUserHistoryRoles = async (interaction: Interaction, importIndex
   })
 }
 
-export const bulkCheckUsersMessage = async (
+export const multiCheckUsersMessage = async (
   interaction: Interaction,
   page: number,
   cacheKey: string,
@@ -444,7 +444,7 @@ export const bulkCheckUsersMessage = async (
   if (!cached) {
     const response = commonComponent({
       color: 'orange',
-      content: 'This bulk check session has expired. Please run the command again.',
+      content: 'This multi check session has expired. Please run the command again.',
     })
     if (newMessage) await interaction.respond(response)
     else await interaction.edit(response)
@@ -454,7 +454,7 @@ export const bulkCheckUsersMessage = async (
   const remaining = await ttl(`${BULK_CHECK_USERS_CACHE_PREFIX}${cacheKey}`)
   const isExpiring = remaining >= 0 && remaining <= BULK_CHECK_USERS_CACHE_TTL_WARN
 
-  const { results } = JSON.parse(cached) as BulkCheckUsersResult
+  const { results } = JSON.parse(cached) as MultiCheckUsersResult
   const blacklistedCount = results.filter(
     (r) => r.user && (r.user.status === 'BLACKLISTED' || r.user.status === 'PERM_BLACKLISTED'),
   ).length
@@ -466,7 +466,7 @@ export const bulkCheckUsersMessage = async (
 
   containerComponents.push({
     type: MessageComponentTypes.TextDisplay as const,
-    content: `### Bulk check — ${blacklistedCount} blacklisted of ${results.length}`,
+    content: `### Multi check — ${blacklistedCount} blacklisted of ${results.length}`,
   })
 
   if (pageResults.length > 0) {
@@ -502,35 +502,35 @@ export const bulkCheckUsersMessage = async (
         {
           type: MessageComponentTypes.Button as const,
           label: '❮',
-          customId: `bulkcheckuseradmin-previous-${page}-${cacheKey}`,
+          customId: `multicheckuseradmin-previous-${page}-${cacheKey}`,
           style: 1,
           disabled: page === 0 || isExpiring,
         },
         {
           type: MessageComponentTypes.Button as const,
           label: '❮❮',
-          customId: `bulkcheckuseradmin-first-0-${cacheKey}`,
+          customId: `multicheckuseradmin-first-0-${cacheKey}`,
           style: 2,
           disabled: page === 0 || isExpiring,
         },
         {
           type: MessageComponentTypes.Button as const,
           label: `${page + 1} / ${totalPages}`,
-          customId: 'bulkcheckuseradmin-page-indicator',
+          customId: 'multicheckuseradmin-page-indicator',
           style: 2,
           disabled: true,
         },
         {
           type: MessageComponentTypes.Button as const,
           label: '❯❯',
-          customId: `bulkcheckuseradmin-last-${totalPages - 1}-${cacheKey}`,
+          customId: `multicheckuseradmin-last-${totalPages - 1}-${cacheKey}`,
           style: 2,
           disabled: isLastPage || isExpiring,
         },
         {
           type: MessageComponentTypes.Button as const,
           label: '❯',
-          customId: `bulkcheckuseradmin-next-${page}-${cacheKey}`,
+          customId: `multicheckuseradmin-next-${page}-${cacheKey}`,
           style: 1,
           disabled: isLastPage || isExpiring,
         },
@@ -549,15 +549,15 @@ export const bulkCheckUsersMessage = async (
     ],
   }
 
-  bulkCheckUsersPage.set(cacheKey, page)
+  multiCheckUsersPage.set(cacheKey, page)
 
   if (newMessage) {
     await interaction.respond(response)
     // Proactively disable all buttons before the cache expires
     setTimeout(
       () => {
-        bulkCheckUsersMessage(interaction, bulkCheckUsersPage.get(cacheKey) ?? page, cacheKey, false).catch(() => {})
-        bulkCheckUsersPage.delete(cacheKey)
+        multiCheckUsersMessage(interaction, multiCheckUsersPage.get(cacheKey) ?? page, cacheKey, false).catch(() => {})
+        multiCheckUsersPage.delete(cacheKey)
       },
       (BULK_CHECK_USERS_CACHE_TTL - BULK_CHECK_USERS_CACHE_TTL_WARN) * 1000,
     )
@@ -569,11 +569,11 @@ export const bulkCheckUsersMessage = async (
 const checkUserAdminRun: Parameters<typeof createCommand>[0]['run'] = async (interaction, options) => {
   const typedOptions = options as {
     check?: { user?: { user: { id: bigint; toggles: { bitfield: number } } } }
-    bulk?: { user_ids?: string }
+    multi?: { user_ids?: string }
   }
 
-  if (typedOptions.bulk !== undefined) {
-    const { user_ids: userIdsRaw } = typedOptions.bulk
+  if (typedOptions.multi !== undefined) {
+    const { user_ids: userIdsRaw } = typedOptions.multi
 
     if (!userIdsRaw) {
       await interaction.respond(
@@ -618,7 +618,7 @@ const checkUserAdminRun: Parameters<typeof createCommand>[0]['run'] = async (int
     const cacheKey = String(interaction.id)
     await set(`${BULK_CHECK_USERS_CACHE_PREFIX}${cacheKey}`, JSON.stringify({ results }), BULK_CHECK_USERS_CACHE_TTL)
 
-    await bulkCheckUsersMessage(interaction as Interaction, 0, cacheKey, true)
+    await multiCheckUsersMessage(interaction as Interaction, 0, cacheKey, true)
     return
   }
 
@@ -792,7 +792,7 @@ const checkUserAdminCommandOptions = {
       ],
     },
     {
-      name: 'bulk',
+      name: 'multi',
       description: 'Check multiple users at once via comma-separated IDs.',
       type: ApplicationCommandOptionTypes.SubCommand,
       options: [
