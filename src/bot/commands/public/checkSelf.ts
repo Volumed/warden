@@ -8,7 +8,7 @@ import { commonComponent } from '../../utils/components.js'
 import { serverTypeMap } from '../../utils/server.js'
 
 export const CHECK_SELF_CACHE_KEY = 'checkself:list'
-export const CHECK_SELF_CACHE_TTL = 300 // 5 minutes
+export const CHECK_SELF_CACHE_TTL = 150 // 2.5 minutes
 
 const MAX_SERVERS_PER_PAGE = 6
 
