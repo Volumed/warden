@@ -20,6 +20,7 @@ import {
   showUserImportRoles,
 } from '../../commands/staff/checkUserAdmin.js'
 import { notesMessage } from '../../commands/staff/note.js'
+import { upStatusMultiMessage } from '../../commands/staff/upStatus.js'
 import { commonComponent } from '../../utils/components.js'
 
 const logCommand = (
@@ -155,6 +156,36 @@ bot.events.interactionCreate = async (interaction) => {
         const response = commonComponent({
           color: 'red',
           content: 'Something went wrong while fetching the multi add results.',
+        })
+        await interaction.respond(response)
+      }
+    }
+
+    if (
+      interaction.data?.customId?.startsWith('upstatusmulti-') &&
+      !interaction.data.customId.startsWith('upstatusmulti-page-')
+    ) {
+      const parts = interaction.data.customId.split('-')
+      const direction = parts[1]
+      let page = Number(parts[2])
+      const cacheKey = parts[3]
+
+      if (direction === 'previous') {
+        page = Math.max(page - 1, 0)
+      } else if (direction === 'next') {
+        page = page + 1
+      } else if (direction === 'first') {
+        page = 0
+      }
+
+      try {
+        return await upStatusMultiMessage(interaction as Interaction, page, cacheKey, false)
+      } catch (error: any) {
+        if (error?.cause?.body?.code === 10062) return
+        logCommand(interaction, 'Failure', `Up status multi (Page ${page})`, LogLevels.Error, error)
+        const response = commonComponent({
+          color: 'red',
+          content: 'Something went wrong while fetching the multi update results.',
         })
         await interaction.respond(response)
       }

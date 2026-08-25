@@ -110,6 +110,25 @@ const getTotalBlacklistedUsers = async (): Promise<number> => {
   }
 }
 
+const updateUserStatus = async (
+  id: string,
+  type: (typeof users.$inferSelect)['type'],
+  status: (typeof users.$inferSelect)['status'],
+  reason: string,
+): Promise<boolean> => {
+  try {
+    const result = await db
+      .update(users)
+      .set({ type, status, reason })
+      .where(eq(users.id, id))
+      .returning({ id: users.id })
+    return result.length > 0
+  } catch (err) {
+    bot.logger.error(`Error updating status for user with ID ${id}:`, err)
+    return false
+  }
+}
+
 // User functions
 const addUser = async (user: typeof users.$inferInsert): Promise<void> => {
   try {
@@ -288,4 +307,5 @@ export {
   getUserImportsTypesById,
   removeNote,
   updateBadServerName,
+  updateUserStatus,
 }

@@ -138,6 +138,7 @@ export const checkUserAdminMessage = async (
       `### <@${user.id}> is blacklisted!${imports.length !== 0 ? ` They have been seen in ${imports.length} server${imports.length === 1 ? '' : 's'}.` : ''}`,
       `> **Status**: \`\`${mapUserStatus(user.status)}\`\``,
       `> **Type${userTypeMapping.length > 1 ? 's' : ''}**: \`\`${userTypeMapping.map((type) => type?.label).join(', ')}\`\``,
+      user.reason ? `> **Reason**: \`\`${user.reason}\`\`` : null,
     ].join('\n'),
   })
 
