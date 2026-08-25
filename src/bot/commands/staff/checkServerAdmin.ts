@@ -315,6 +315,9 @@ const checkServerAdminRun: Parameters<typeof createCommand>[0]['run'] = async (i
                 `> **ID:** \`${badServer.id}\``,
                 `> **Type:** ${serverType?.label ?? 'Unknown'}`,
                 `> **Reason:** ${badServer.reason}`,
+                badServer.oldnames
+                  ? `> **Old name${badServer.oldnames.split(',').length > 1 ? 's' : ''}:** ${badServer.oldnames.split(',').join(', ')}`
+                  : null,
                 badServer.invite
                   ? `> **Invite:** https://discord.gg/${getInviteCode({ invite: badServer.invite })}`
                   : null,
