@@ -63,6 +63,29 @@ const addBadServer = async (
   }
 }
 
+const updateBadServerName = async (id: string, newName: string): Promise<void> => {
+  try {
+    const oldName = await db
+      .select({ name: badservers.name, oldnames: badservers.oldnames })
+      .from(badservers)
+      .where(eq(badservers.id, id))
+      .limit(1)
+    if (oldName.length === 0) {
+      bot.logger.warn(`No bad server found with ID ${id} to update`)
+      return
+    }
+    const { name, oldnames } = oldName[0]
+    const updatedOldnames = oldnames ? `${oldnames},${name}` : name
+    await db
+      .update(badservers)
+      .set({ name: newName, oldnames: updatedOldnames, updatedat: new Date() })
+      .where(eq(badservers.id, id))
+    bot.logger.info(`Bad server with ID ${id} updated successfully`)
+  } catch (err) {
+    bot.logger.error(`Error updating bad server with ID ${id}:`, err)
+  }
+}
+
 // User functions
 const getUserById = async (id: string): Promise<User | null> => {
   try {
@@ -264,4 +287,5 @@ export {
   getUserImportsCountById,
   getUserImportsTypesById,
   removeNote,
+  updateBadServerName,
 }

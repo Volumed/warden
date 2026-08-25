@@ -21,20 +21,20 @@ createCommand({
   description: 'Check if a server is blacklisted.',
   options: [
     {
-      name: 'server_id',
-      description: 'The ID of the server to check.',
-      type: ApplicationCommandOptionTypes.String,
-      required: false,
-    },
-    {
       name: 'invite',
       description: 'An invite link or code of the server to check.',
       type: ApplicationCommandOptionTypes.String,
       required: false,
     },
+    {
+      name: 'server_id',
+      description: 'The ID of the server to check.',
+      type: ApplicationCommandOptionTypes.String,
+      required: false,
+    },
   ],
   async run(interaction, options) {
-    const { server_id: serverId, invite } = options as { server_id: string; invite: string }
+    const { invite, server_id: serverId } = options as { invite: string; server_id: string }
 
     if (!serverId && !invite) {
       const response = commonComponent({

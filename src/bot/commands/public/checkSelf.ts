@@ -7,7 +7,7 @@ import { componentColors } from '../../utils/colors.js'
 import { commonComponent } from '../../utils/components.js'
 import { serverTypeMap } from '../../utils/server.js'
 
-export const CHECK_SELF_CACHE_KEY = 'checkself:list'
+export const CHECK_SELF_CACHE_KEY = 'checkself:list:'
 export const CHECK_SELF_CACHE_TTL = 150 // 2.5 minutes
 
 const MAX_SERVERS_PER_PAGE = 6
@@ -16,7 +16,7 @@ const pager = async (
   userId: string,
   page: number,
 ): Promise<{ imports: BadServer[]; hasMore: boolean; totalPages: number }> => {
-  const cached = await get(`${CHECK_SELF_CACHE_KEY}:${userId}`)
+  const cached = await get(`${CHECK_SELF_CACHE_KEY}${userId}`)
   let result: BadServer[]
 
   if (cached) {
@@ -24,7 +24,7 @@ const pager = async (
   } else {
     const resultFetch = await getServersByImportId(userId)
     result = resultFetch.sort((a, b) => b.createdat.getTime() - a.createdat.getTime())
-    await set(`${CHECK_SELF_CACHE_KEY}:${userId}`, JSON.stringify(result), CHECK_SELF_CACHE_TTL)
+    await set(`${CHECK_SELF_CACHE_KEY}${userId}`, JSON.stringify(result), CHECK_SELF_CACHE_TTL)
   }
 
   const startIndex = page * MAX_SERVERS_PER_PAGE
