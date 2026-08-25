@@ -5,6 +5,7 @@ import createCommand from '../../commands.js'
 import { get, healthCheck, set } from '../../redis/redis.js'
 import { componentColors } from '../../utils/colors.js'
 import { commonComponent } from '../../utils/components.js'
+import { formatNumber } from '../../utils/format.js'
 
 const GUILD_COUNT_CACHE_KEY = 'status:totalGuilds'
 const GUILD_COUNT_TTL = 60 * 20 // 20 minutes
@@ -85,7 +86,7 @@ createCommand({
                   '### General',
                   `> **Total Shards**: \`\`${totalShards}\`\``,
                   `> **Current Shard**: \`\`${shardInfo.shardId}\`\``,
-                  `> **Total Protected Servers**: \`\`${totalGuilds}\`\``,
+                  `> **Total Protected Servers**: \`\`${formatNumber(totalGuilds)}\`\``,
                   `> **Gateway Latency**: \`\`${shardPing}\`\``,
                   `> **Roundtrip Latency**: \`\`${ping}ms\`\``,
                   `> **Memory Usage**: \`\`${memoryUsage.toFixed(2)} MB\`\``,
@@ -102,8 +103,8 @@ createCommand({
                 content: [
                   '### Database',
                   `> **Status**: \`\`${dbHealthy ? 'Connected' : 'Disconnected'}\`\``,
-                  `> **Total Bad Servers**: \`\`${totalBadServersCount}\`\``,
-                  `> **Total Blacklisted Users**: \`\`${totalBlacklistedUsersCount}\`\``,
+                  `> **Total Bad Servers**: \`\`${formatNumber(totalBadServersCount)}\`\``,
+                  `> **Total Blacklisted Users**: \`\`${formatNumber(totalBlacklistedUsersCount)}\`\``,
                 ].join('\n'),
               },
               {
